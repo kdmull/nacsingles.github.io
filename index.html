@@ -462,8 +462,19 @@ function syncBarHTML(){
 }
 async function refreshAll(){await loadData();renderAll();showToast('Refreshed!');}
 
+function getActivePlayers(){
+  // Derive player list from the schedule itself — anyone who appears in a match
+  const seen = new Set();
+  for(const w of schedule) for(const m of w.matches){ seen.add(m.p1); seen.add(m.p2); }
+  // Keep PLAYERS order for players still in the array, then append any extras found in schedule
+  const ordered = PLAYERS.filter(p=>seen.has(p));
+  seen.forEach(p=>{ if(!ordered.includes(p)) ordered.push(p); });
+  return ordered;
+}
+
 function getStats(){
-  const s={};for(const p of PLAYERS)s[p]={w:0,l:0,pts:0,opp:0,streak:[]};
+  const activePlayers = getActivePlayers();
+  const s={};for(const p of activePlayers)s[p]={w:0,l:0,pts:0,opp:0,streak:[]};
   for(const w of schedule)for(const m of w.matches){
     if(m.s1!==null&&m.s2!==null){
       const win=m.s1>m.s2?m.p1:m.p2,los=m.s1>m.s2?m.p2:m.p1;
@@ -479,14 +490,15 @@ function findCurrentWeek(){for(const w of schedule)if(w.matches.some(m=>m.s1===n
 function renderStandings(){
   document.getElementById('sb-standings').innerHTML=syncBarHTML();
   const stats=getStats();
-  const rows=PLAYERS.map(p=>{
+  const activePlayers=getActivePlayers();
+  const rows=activePlayers.map(p=>{
     const s=stats[p]||{w:0,l:0,pts:0,opp:0,streak:[]};const tot=s.w+s.l;
     return{...s,p,pct:tot?s.w/tot:0,diff:s.pts-s.opp,streak:s.streak.slice(-3).join('')||'—',last:s.streak[s.streak.length-1]||null};
   }).sort((a,b)=>b.pct-a.pct||b.diff-a.diff);
   const played=schedule.reduce((a,w)=>a+w.matches.filter(m=>m.s1!==null).length,0);
   document.getElementById('standings-subtitle').textContent=`${played} games played this season`;
   document.getElementById('league-stats').innerHTML=[
-    ['Players',PLAYERS.length,'in the league'],
+    ['Players',activePlayers.length,'in the league'],
     ['Weeks',schedule.length,'round robin'],
     ['Played',played,`of ${schedule.reduce((a,w)=>a+w.matches.length,0)} total`],
     ['Leader',rows[0]?.p||'—',rows[0]?(rows[0].w+'-'+rows[0].l):'—'],
@@ -577,7 +589,10 @@ function checkAdmin(){
 function renderAdminPanel(){
   document.getElementById('admin-week-sel').innerHTML=schedule.map(w=>`<option value="${w.week}">Week ${w.week}</option>`).join('');
   document.getElementById('admin-players').innerHTML=PLAYERS.map((p,i)=>
-    `<input class="admin-input" style="width:110px" value="${p}" onchange="PLAYERS[${i}]=this.value"/>`
+    `<div style="display:flex;align-items:center;gap:4px">
+      <input class="admin-input" style="width:110px" value="${p}" onchange="PLAYERS[${i}]=this.value"/>
+      <button class="btn btn-danger" style="font-size:11px;padding:3px 7px;white-space:nowrap" onclick="removePlayer(${i})" title="Remove player">✕</button>
+    </div>`
   ).join('');
   renderAdminMatches();
 }
@@ -601,6 +616,14 @@ function addMatch(){
   renderAdminMatches();
 }
 function removeMatch(week,idx){schedule.find(w=>w.week===week).matches.splice(idx,1);renderAdminMatches();}
+function removePlayer(idx){
+  const name=PLAYERS[idx];
+  if(!confirm(`Remove "${name}" from the league? This will also remove all their scheduled matches.`))return;
+  for(const w of schedule){ w.matches=w.matches.filter(m=>m.p1!==name&&m.p2!==name); }
+  PLAYERS.splice(idx,1);
+  renderAdminPanel();
+  showToast(name+" removed — hit Save to sync");
+}
 async function saveAdmin(){
   const btn=document.getElementById('admin-save-btn');btn.textContent='Saving...';btn.disabled=true;
   const ok=await saveData();renderAll();
