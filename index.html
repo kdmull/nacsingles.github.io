@@ -658,12 +658,12 @@ function renderScheduleMatches(week){
     const scoreStr = r.complete
       ? `<span style="color:var(--green-dark);font-size:13px;font-weight:700">${r.winner}</span> wins ${r.p1w>r.p2w?r.p1w+'-'+r.p2w:r.p2w+'-'+r.p1w}`
       : (gamesPlayed>0 ? `Game ${gamesPlayed+1}` : '—');
-    return\`<div class="match-card \${r.complete?'completed':'upcoming'}">
-      <div class="match-num">Match \${i+1}</div>
-      <div class="match-players"><span class="match-player\${r.winner===m.p1?' winner':''}">\${m.p1}</span><span class="vs-badge">vs</span><span class="match-player\${r.winner===m.p2?' winner':''}">\${m.p2}</span></div>
-      <div class="match-score" style="font-size:13px;min-width:110px">\${scoreStr}</div>
-      <div class="match-status \${r.complete?'':'pending'}">\${r.complete?'Final':'Pending'}</div>
-    </div>\`;
+    return`<div class="match-card ${r.complete?'completed':'upcoming'}">
+      <div class="match-num">Match ${i+1}</div>
+      <div class="match-players"><span class="match-player${r.winner===m.p1?' winner':''}">${m.p1}</span><span class="vs-badge">vs</span><span class="match-player${r.winner===m.p2?' winner':''}">${m.p2}</span></div>
+      <div class="match-score" style="font-size:13px;min-width:110px">${scoreStr}</div>
+      <div class="match-status ${r.complete?'':'pending'}">${r.complete?'Final':'Pending'}</div>
+    </div>`;
   }).join('')+byeHtml;
 }
 function setScheduleWeek(w){renderScheduleMatches(w);}
