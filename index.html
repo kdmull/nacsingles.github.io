@@ -445,7 +445,7 @@ let scoreAuthed=false;
 
 window.addEventListener('DOMContentLoaded',async()=>{
   useLocal=false;
-  document.getElementById('connected-url').textContent=SUPABASE_URL;
+
   await loadData();
   scoresWeek=scheduleWeek=findCurrentWeek();
   // Check for #admin hash to show hidden admin page
