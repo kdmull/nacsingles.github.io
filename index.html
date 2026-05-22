@@ -50,15 +50,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .refresh-btn{background:none;border:none;color:var(--navy);cursor:pointer;font-size:12px;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;font-weight:700}
 
 /* ── CONFIG BANNER ── */
-#config-banner{background:var(--navy-dark);border:1px solid var(--blue);border-radius:var(--radius-lg);padding:1.2rem 1.5rem;margin:1rem 1.5rem;display:none}
-#config-banner h3{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--white);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.5px}
-#config-banner p{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:1rem;line-height:1.6}
-#config-banner code{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--blue)}
-.config-fields{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-.config-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px}
-.config-field label{font-size:12px;color:rgba(255,255,255,.6);font-family:var(--font-display);text-transform:uppercase;letter-spacing:.5px}
-.config-field input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:var(--radius);color:var(--white);padding:8px 12px;font-size:13px;outline:none;font-family:var(--font-body)}
-.config-field input:focus{border-color:var(--blue)}
+
 
 /* ── STANDINGS TABLE ── */
 .standings-table{width:100%;border-collapse:collapse;background:var(--white);border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,42,108,.06)}
@@ -175,9 +167,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .toast.show{transform:translateY(0);opacity:1}
 
 /* ── SETUP MODAL ── */
-#setup-modal .modal{border-top:4px solid var(--green)}
-#setup-modal pre{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-size:11px;color:var(--muted);overflow-x:auto;margin-bottom:1.2rem;white-space:pre-wrap}
-#setup-modal code{background:var(--surface2);padding:2px 5px;border-radius:3px;font-size:12px;color:var(--navy)}
+
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
@@ -255,17 +245,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 <body>
 
 <!-- CONFIG BANNER -->
-<div id="config-banner">
-  <h3>Connect to Supabase</h3>
-  <p>Paste your Supabase Project URL and <code>anon</code> key below, then click Save.<br>
-  Find them at <strong>supabase.com → your project → Settings → API</strong>.</p>
-  <div class="config-fields">
-    <div class="config-field"><label>Project URL</label><input type="text" id="cfg-url" placeholder="https://xxxx.supabase.co"/></div>
-    <div class="config-field"><label>Anon Key</label><input type="text" id="cfg-key" placeholder="eyJhbGci..."/></div>
-    <button class="btn btn-green" onclick="saveConfig()" style="align-self:flex-end">Save &amp; Connect</button>
-  </div>
-  <p style="margin-top:.75rem;font-size:12px;color:rgba(255,255,255,.5)">Credentials are stored in your browser's localStorage and sent only to your Supabase project.</p>
-</div>
+
 
 <!-- NAV -->
 <nav>
@@ -402,11 +382,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
       <div id="admin-matches" style="min-width:480px"></div>
       </div><!-- end scroll -->
     </div>
-    <div class="admin-section" style="border-color:rgba(26,42,108,.25)">
-      <h3>Database Connection</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:1rem">Connected to: <code id="connected-url" style="color:var(--navy);background:var(--surface);padding:2px 6px;border-radius:3px">—</code></p>
-      <button class="btn btn-ghost" onclick="showConfigBanner()">Change Connection</button>
-    </div>
+
   </div>
 </div>
 
@@ -436,45 +412,9 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
   </div>
 </div>
 
-<!-- SETUP MODAL -->
-<div class="modal-overlay" id="setup-modal" style="opacity:1;pointer-events:all">
-  <div class="modal" id="setup-modal-inner">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.2rem">
-      <svg width="36" height="36" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="40" height="40" rx="2" fill="#4db8e8"/>
-        <polygon points="2,42 2,22 22,2 42,2 42,22 22,42" fill="#4caf28"/>
-        <polygon points="8,36 36,8 42,14 14,42" fill="white" opacity="0.9"/>
-        <circle cx="22" cy="22" r="10" fill="none" stroke="white" stroke-width="2.5"/>
-      </svg>
-      <h3 style="margin:0">Welcome to Nitro Pickleball</h3>
-    </div>
-    <p style="color:var(--muted);font-size:14px;margin-bottom:1.2rem;line-height:1.7">
-      This app needs a free <strong style="color:var(--navy)">Supabase</strong> database to sync scores across all players.
-      Setup takes about 3 minutes:
-    </p>
-    <ol style="color:var(--muted);font-size:13px;line-height:2.1;padding-left:1.2rem;margin-bottom:1.2rem">
-      <li>Go to <strong style="color:var(--navy)">supabase.com</strong> → New Project</li>
-      <li>Open <strong style="color:var(--navy)">SQL Editor</strong> and run the query below</li>
-      <li>Go to <strong style="color:var(--navy)">Settings → API</strong> and copy your URL + anon key</li>
-      <li>Click <strong style="color:var(--green-dark)">Connect Database</strong> and paste them in</li>
-    </ol>
-    <pre>CREATE TABLE pb_league (
-  key TEXT PRIMARY KEY,
-  value JSONB NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-ALTER TABLE pb_league ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "public read"   ON pb_league FOR SELECT USING (true);
-CREATE POLICY "public write"  ON pb_league FOR INSERT WITH CHECK (true);
-CREATE POLICY "public update" ON pb_league FOR UPDATE USING (true);</pre>
-    <div class="modal-actions" style="justify-content:space-between">
-      <button class="btn btn-ghost" onclick="useLocalMode()">Use Local Storage</button>
-      <button class="btn btn-green" onclick="closeSetupModal()">Connect Database</button>
-    </div>
-  </div>
-</div>
 
-<div class="toast" id="toast"></div>
+
+<div class="toast"<div class="toast" id="toast"></div>
 
 <script>
 const ADMIN_PW  = 'pickle2024';
@@ -497,15 +437,15 @@ const SCHEDULE_DEFAULT = [
 
 let schedule=JSON.parse(JSON.stringify(SCHEDULE_DEFAULT));
 let scheduleWeek=1,scoresWeek=1,currentModalMatch=null,lastSynced=null,useLocal=false;
-let SUPABASE_URL='',SUPABASE_KEY='';
+// ↓↓ Paste your Supabase credentials here ↓↓
+const SUPABASE_URL='https://gjytcqakwnbwjguinrpb.supabase.co';
+const SUPABASE_KEY='sb_publishable_zKNlOh_62A2joPY5vuG0rg_B8SxvK4w';
+// ↑↑ e.g. 'https://xxxx.supabase.co' and 'eyJhbGci...' ↑↑
 let scoreAuthed=false;
 
 window.addEventListener('DOMContentLoaded',async()=>{
-  SUPABASE_URL=localStorage.getItem('pb_sb_url')||'';
-  SUPABASE_KEY=localStorage.getItem('pb_sb_key')||'';
-  useLocal=localStorage.getItem('pb_local_mode')==='true';
-  if(useLocal||SUPABASE_URL) document.getElementById('setup-modal').style.display='none';
-  if(SUPABASE_URL) document.getElementById('connected-url').textContent=SUPABASE_URL;
+  useLocal=false;
+  document.getElementById('connected-url').textContent=SUPABASE_URL;
   await loadData();
   scoresWeek=scheduleWeek=findCurrentWeek();
   // Check for #admin hash to show hidden admin page
@@ -544,38 +484,15 @@ function renderAll(){
   if(scoreAuthed) renderScoreMatches(scoresWeek);
 }
 
-function closeSetupModal(){
-  document.getElementById('setup-modal').style.display='none';
-  document.getElementById('config-banner').style.display='block';
-  document.getElementById('cfg-url').focus();
-}
-function useLocalMode(){
-  localStorage.setItem('pb_local_mode','true');useLocal=true;
-  document.getElementById('setup-modal').style.display='none';
-  loadData().then(()=>{scoresWeek=scheduleWeek=findCurrentWeek();renderAll();});
-}
-function showConfigBanner(){document.getElementById('config-banner').style.display='block';document.getElementById('cfg-url').focus();}
-function saveConfig(){
-  const u=document.getElementById('cfg-url').value.trim().replace(/\/$/,'');
-  const k=document.getElementById('cfg-key').value.trim();
-  if(!u||!k){showToast('Enter both URL and key');return;}
-  localStorage.setItem('pb_sb_url',u);localStorage.setItem('pb_sb_key',k);
-  localStorage.removeItem('pb_local_mode');
-  SUPABASE_URL=u;SUPABASE_KEY=k;useLocal=false;
-  document.getElementById('config-banner').style.display='none';
-  document.getElementById('connected-url').textContent=u;
-  loadData().then(()=>{scoresWeek=scheduleWeek=findCurrentWeek();renderAll();showToast('Connected!');});
-}
-
 async function dbGet(key){
-  if(useLocal||!SUPABASE_URL){const v=localStorage.getItem('pb_'+key);return v?JSON.parse(v):null;}
+  if(!SUPABASE_URL){console.error('No Supabase URL configured');return null;}
   try{
     const r=await fetch(`${SUPABASE_URL}/rest/v1/pb_league?key=eq.${encodeURIComponent(key)}&select=value`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
     if(!r.ok)return null;const data=await r.json();return data.length?data[0].value:null;
   }catch(e){return null;}
 }
 async function dbSet(key,val){
-  if(useLocal||!SUPABASE_URL){localStorage.setItem('pb_'+key,JSON.stringify(val));return true;}
+  if(!SUPABASE_URL){console.error('No Supabase URL configured');return false;}
   try{
     const r=await fetch(`${SUPABASE_URL}/rest/v1/pb_league`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key,value:val,updated_at:new Date().toISOString()})});
     return r.ok||r.status===201||r.status===200;
