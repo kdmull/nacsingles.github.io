@@ -623,8 +623,6 @@ function renderStandings(){
   const played=schedule.reduce((a,w)=>a+w.matches.filter(m=>seriesResult(m).complete).length,0);
   document.getElementById('standings-subtitle').textContent=`${played} games played this season`;
   document.getElementById('league-stats').innerHTML=[
-    ['Players',activePlayers.length,'in the league'],
-    ['Weeks',schedule.length,'round robin'],
     ['Played',played,`of ${schedule.reduce((a,w)=>a+w.matches.length,0)} total`],
     ['Leader',rows[0]?.p||'—',rows[0]?(rows[0].w+'-'+rows[0].l):'—'],
   ].map(([l,v,s])=>`<div class="stat-card"><div class="stat-label">${l}</div><div class="stat-val" style="${typeof v==='string'?'font-size:18px':''}">${v}</div><div class="stat-sub">${s}</div></div>`).join('');
