@@ -290,7 +290,6 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     <button class="nav-tab active" onclick="showPage('standings',this)">Standings</button>
     <button class="nav-tab" onclick="showPage('schedule',this)">Schedule</button>
     <button class="nav-tab" onclick="showPage('scores',this)">Scores</button>
-    <button class="nav-tab" onclick="showPage('admin',this)">Admin</button>
   </div>
 </nav>
 
@@ -506,8 +505,35 @@ window.addEventListener('DOMContentLoaded',async()=>{
   if(SUPABASE_URL) document.getElementById('connected-url').textContent=SUPABASE_URL;
   await loadData();
   scoresWeek=scheduleWeek=findCurrentWeek();
-  renderAll();
+  // Check for #admin hash to show hidden admin page
+  if(window.location.hash==='#admin'){
+    showAdminPage();
+  } else {
+    renderAll();
+  }
 });
+
+// Listen for hash changes (e.g. user navigates to #admin while on site)
+window.addEventListener('hashchange',()=>{
+  if(window.location.hash==='#admin') showAdminPage();
+});
+
+function showAdminPage(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-admin').classList.add('active');
+  // Show a discreet indicator in nav so admin knows they're in admin mode
+  let indicator = document.getElementById('admin-nav-indicator');
+  if(!indicator){
+    indicator = document.createElement('div');
+    indicator.id = 'admin-nav-indicator';
+    indicator.style.cssText='padding:.5rem 1rem;font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--green);border-bottom:3px solid var(--green);cursor:pointer';
+    indicator.textContent='Admin';
+    indicator.onclick=()=>showAdminPage();
+    document.querySelector('.nav-tabs').appendChild(indicator);
+  }
+  renderAll();
+}
 
 function renderAll(){
   renderStandings();
@@ -882,6 +908,12 @@ function showPage(id,el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(el)el.classList.add('active');
+  // Clear admin indicator and hash when leaving admin
+  if(id!=='admin'){
+    const ind=document.getElementById('admin-nav-indicator');
+    if(ind) ind.remove();
+    if(window.location.hash==='#admin') history.pushState('','',window.location.pathname);
+  }
   if(id==='standings')renderStandings();
   if(id==='schedule')renderScheduleMatches(scheduleWeek);
   if(id==='scores'){
