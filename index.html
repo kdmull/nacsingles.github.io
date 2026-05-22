@@ -116,7 +116,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .modal-player-name{font-weight:600;font-size:14px;color:var(--navy)}
 .modal-vs{font-family:var(--font-display);font-weight:700;color:var(--muted)}
 .score-inputs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:1.5rem}
-.game-row{display:grid;grid-template-columns:1fr 36px 36px auto 36px 36px;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.game-row{display:grid;grid-template-columns:60px 1fr 28px 1fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
 .game-row:last-child{border-bottom:none}
 .game-label{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
 .game-input{width:100%;text-align:center;font-family:var(--font-display);font-size:20px;font-weight:700;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--navy);padding:5px 4px;outline:none;-webkit-tap-highlight-color:transparent;min-height:44px}
@@ -223,8 +223,8 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
   /* Modal */
   .modal{padding:1.4rem;max-width:100%}
   .modal h3{font-size:18px}
-  .game-input{font-size:17px;padding:5px 2px;width:44px}
-  .game-row{grid-template-columns:46px 44px 20px 44px auto;gap:4px}
+  .game-input{font-size:17px;padding:5px 2px}
+  .game-row{grid-template-columns:50px 1fr 22px 1fr;gap:6px}
   .game-label{font-size:11px}
 
   /* Admin */
@@ -420,13 +420,11 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
       <div class="modal-player"><div class="modal-player-name" id="modal-p2"></div></div>
     </div>
     <!-- column headers for game rows -->
-    <div style="display:grid;grid-template-columns:50px 36px 36px auto 36px 36px;gap:6px;padding:0 0 4px 0;margin-bottom:2px">
+    <div style="display:grid;grid-template-columns:60px 1fr 28px 1fr;gap:8px;padding:0 0 4px 0;margin-bottom:2px">
       <span></span>
       <span style="text-align:center;font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)" id="col-p1-label"></span>
       <span></span>
-      <span></span>
       <span style="text-align:center;font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)" id="col-p2-label"></span>
-      <span></span>
     </div>
     <div id="modal-series-status" style="text-align:center;font-family:var(--font-display);font-size:13px;color:var(--muted);margin-bottom:1rem;min-height:18px"></div>
     <!-- Game rows injected by JS -->
@@ -751,7 +749,6 @@ function renderModalGames(m){
       <input class="game-input${p1win?' winner':''}" type="number" min="0" max="30" id="g${i}_s1" value="${g.s1!==null?g.s1:''}" placeholder="0" ${locked?'disabled':''} oninput="onGameInput()"/>
       <div class="game-dash">—</div>
       <input class="game-input${p2win?' winner':''}" type="number" min="0" max="30" id="g${i}_s2" value="${g.s2!==null?g.s2:''}" placeholder="0" ${locked?'disabled':''} oninput="onGameInput()"/>
-      <span></span>
     </div>`;
   }).join('');
   document.getElementById('modal-games').innerHTML=rows;
