@@ -254,11 +254,30 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
 <div class="page" id="page-scores">
   <div class="section-header">
     <div class="section-accent"></div>
-    <div class="section-header-text"><h2>Submit Scores</h2><p>Select your week and enter results. All players see updates live.</p></div>
+    <div class="section-header-text"><h2>Submit Scores</h2><p>Password required to enter or edit results.</p></div>
   </div>
-  <div id="sb-scores"></div>
-  <div class="week-scroll" id="score-week-tabs"></div>
-  <div class="matches-grid" id="score-matches"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
+  <!-- SCORES AUTH GATE -->
+  <div id="scores-gate" style="text-align:center;padding:2rem 1rem">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;max-width:360px;margin:0 auto;box-shadow:0 1px 4px rgba(26,42,108,.07)">
+      <div style="font-size:32px;margin-bottom:.5rem">🏓</div>
+      <h3 style="font-family:var(--font-display);font-size:22px;font-weight:900;text-transform:uppercase;color:var(--navy);margin-bottom:.4rem;letter-spacing:.5px">Players Only</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:1.2rem">Enter the league password to submit or edit scores.</p>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <input type="password" id="scores-pw" placeholder="League password"
+          style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);padding:9px 14px;font-size:14px;width:180px;outline:none;font-family:var(--font-body)"
+          onkeydown="if(event.key==='Enter')checkScoresAuth()"
+          onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'"/>
+        <button class="btn btn-primary" onclick="checkScoresAuth()">Enter</button>
+      </div>
+      <p id="scores-err" style="color:var(--danger);font-size:13px;margin-top:8px;min-height:18px"></p>
+    </div>
+  </div>
+  <!-- SCORES CONTENT (hidden until authed) -->
+  <div id="scores-content" style="display:none">
+    <div id="sb-scores"></div>
+    <div class="week-scroll" id="score-week-tabs"></div>
+    <div class="matches-grid" id="score-matches"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
+  </div>
 </div>
 
 <!-- ADMIN -->
@@ -372,7 +391,8 @@ CREATE POLICY "public update" ON pb_league FOR UPDATE USING (true);</pre>
 <div class="toast" id="toast"></div>
 
 <script>
-const ADMIN_PW = 'pickle2024';
+const ADMIN_PW  = 'pickle2024';
+const SCORES_PW = 'NAC'; // ← change this to your desired scores password
 let PLAYERS = ['Kyle','Jordan C.','Cordel B.','Ethan V.','Elias V.',
                'Marcus T.','Devon W.','Chase H.','Riley S.','Jordan M.','Tanner B.','Cam P.'];
 const SCHEDULE_DEFAULT = [
@@ -392,6 +412,7 @@ const SCHEDULE_DEFAULT = [
 let schedule=JSON.parse(JSON.stringify(SCHEDULE_DEFAULT));
 let scheduleWeek=1,scoresWeek=1,currentModalMatch=null,lastSynced=null,useLocal=false;
 let SUPABASE_URL='',SUPABASE_KEY='';
+let scoreAuthed=false;
 
 window.addEventListener('DOMContentLoaded',async()=>{
   SUPABASE_URL=localStorage.getItem('pb_sb_url')||'';
@@ -404,7 +425,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
   renderAll();
 });
 
-function renderAll(){renderStandings();renderScheduleMatches(scheduleWeek);renderScoreMatches(scoresWeek);}
+function renderAll(){
+  renderStandings();
+  renderScheduleMatches(scheduleWeek);
+  if(scoreAuthed) renderScoreMatches(scoresWeek);
+}
 
 function closeSetupModal(){
   document.getElementById('setup-modal').style.display='none';
@@ -579,6 +604,18 @@ async function submitScore(){
   showToast(ok?'Score saved!':'Saved locally — check DB connection');
 }
 
+function checkScoresAuth(){
+  const pw=document.getElementById('scores-pw').value;
+  if(pw===SCORES_PW||pw===ADMIN_PW){
+    scoreAuthed=true;
+    document.getElementById('scores-gate').style.display='none';
+    document.getElementById('scores-content').style.display='block';
+    renderScoreMatches(scoresWeek);
+  } else {
+    document.getElementById('scores-err').textContent='Incorrect password.';
+    document.getElementById('scores-pw').value='';
+  }
+}
 function checkAdmin(){
   if(document.getElementById('admin-pw').value===ADMIN_PW){
     document.getElementById('admin-gate').style.display='none';
@@ -647,7 +684,18 @@ function showPage(id,el){
   if(el)el.classList.add('active');
   if(id==='standings')renderStandings();
   if(id==='schedule')renderScheduleMatches(scheduleWeek);
-  if(id==='scores')renderScoreMatches(scoresWeek);
+  if(id==='scores'){
+    if(scoreAuthed){
+      document.getElementById('scores-gate').style.display='none';
+      document.getElementById('scores-content').style.display='block';
+      renderScoreMatches(scoresWeek);
+    } else {
+      document.getElementById('scores-gate').style.display='block';
+      document.getElementById('scores-content').style.display='none';
+      // focus the password field
+      setTimeout(()=>{ const el=document.getElementById('scores-pw'); if(el) el.focus(); },100);
+    }
+  }
 }
 function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
