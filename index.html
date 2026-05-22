@@ -69,6 +69,11 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .standings-table td.num{text-align:center;font-weight:600}
 .standings-table tbody tr:last-child td{border-bottom:none}
 .standings-table tbody tr:hover{background:var(--surface)}
+.playoff-row{background:rgba(76,175,40,.05)}
+.playoff-row:hover{background:rgba(76,175,40,.1) !important}
+.playoff-row td:first-child{border-left:3px solid var(--green)}
+.cutline-row td{border-top:2px dashed rgba(76,175,40,.4) !important}
+.playoff-badge{display:inline-block;font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--green-dark);background:rgba(76,175,40,.12);padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
 .rank{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--muted)}
 .rank-1{color:#d4a017}.rank-2{color:#8a8a8a}.rank-3{color:#a0522d}
 .player-name{font-weight:600;font-size:15px;color:var(--navy)}
@@ -656,7 +661,12 @@ function renderStandings(){
     const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
     const dc=r.diff>0?'pos':r.diff<0?'neg':'';
     const sc=r.last==='W'?'streak-w':'streak-l';
-    return`<tr><td><span class="rank ${rc}">${i+1}</span></td><td><span class="player-name">${r.p}</span></td>
+    const isPlayoff = i<4;
+    const isCutline = i===4;
+    const playoffBadge = isPlayoff?`<span class="playoff-badge">Playoffs</span>`:'';
+    return`<tr class="${isPlayoff?'playoff-row':''}${isCutline?' cutline-row':''}">
+      <td><span class="rank ${rc}">${i+1}</span></td>
+      <td><span class="player-name">${r.p}</span>${playoffBadge}</td>
       <td class="num">${r.w}</td><td class="num">${r.l}</td>
       <td class="num"><span class="win-pct">${Math.round(r.pct*100)}%</span></td>
       <td class="num"><span class="pts-diff ${dc}">${r.diff>0?'+':''}${r.diff}</span></td>
