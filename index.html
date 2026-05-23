@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="naclogo.png" />
-<title>Nitro Athletic Complex - Singles League</title>
+<title>Nitro Athletic Complex — Pickleball League</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -42,13 +41,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .section-accent{width:4px;height:40px;background:var(--green);border-radius:2px;flex-shrink:0}
 
 /* ── SYNC BAR ── */
-.sync-bar{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;margin-bottom:1.5rem;font-size:13px;color:var(--muted)}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
-.sync-dot.live{background:var(--green);animation:pulse 2s infinite}
-.sync-dot.err{background:var(--danger)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.sync-bar .sync-time{margin-left:auto;font-size:12px}
-.refresh-btn{background:none;border:none;color:var(--navy);cursor:pointer;font-size:12px;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;font-weight:700}
 
 /* ── CONFIG BANNER ── */
 
@@ -174,7 +167,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 @media(max-width:768px){
   /* Nav */
   nav{padding:0 1rem;flex-wrap:wrap}
-  .nav-brand{padding:.6rem 0}
+  .nav-brand{padding:.6rem 0;margin-right:0;width:100%;justify-content:center}
   .nav-logo{height:36px}
   .nav-title-main{font-size:17px}
   .nav-title-sub{font-size:10px;letter-spacing:2px}
@@ -208,8 +201,6 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
   .week-btn{padding:5px 10px;font-size:12px}
 
   /* Sync bar */
-  .sync-bar{font-size:12px;flex-wrap:wrap;gap:6px}
-  .sync-bar .sync-time{margin-left:0;width:100%}
 
   /* Modal */
   .modal{padding:1.4rem;max-width:100%}
@@ -252,7 +243,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 <nav>
   <a class="nav-brand" href="#">
     <!-- Inline SVG recreation of the Nitro Athletic Complex logo mark -->
-    <img src="naclogo.png" class="nav-logo" alt="Nitro Athletic Complex" />
+    <svg class="nav-logo" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
       <!-- Square background: blue top-right, green bottom-left -->
       <rect x="2" y="2" width="40" height="40" rx="2" fill="#4db8e8"/>
       <polygon points="2,42 2,22 22,2 42,2 42,22 22,42" fill="#4caf28"/>
@@ -268,8 +259,8 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
       </g>
     </svg>
     <div class="nav-title">
-      <!-- <span class="nav-title-main">Nitro</span>
-      <span class="nav-title-sub">Athletic Complex · Pickleball</span> -->
+      <span class="nav-title-main">Nitro</span>
+      <span class="nav-title-sub">Athletic Complex · Pickleball</span>
     </div>
   </a>
   <div class="nav-tabs">
@@ -285,7 +276,6 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     <div class="section-accent"></div>
     <div class="section-header-text"><h2>Standings</h2><p id="standings-subtitle">Loading...</p></div>
   </div>
-  <div id="sb-standings"></div>
   <div class="stats-grid" id="league-stats"><div class="loading-overlay"><div class="spinner"></div>Loading from database...</div></div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-lg);border:1px solid var(--border)">
   <table class="standings-table" style="border:none;border-radius:0">
@@ -305,7 +295,6 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     <div class="section-accent"></div>
     <div class="section-header-text"><h2>Schedule</h2><p>11-week round robin — all 12 players</p></div>
   </div>
-  <div id="sb-schedule"></div>
   <div class="week-scroll" id="week-tabs"></div>
   <div class="matches-grid" id="schedule-matches"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
 </div>
@@ -334,7 +323,6 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
   </div>
   <!-- SCORES CONTENT (hidden until authed) -->
   <div id="scores-content" style="display:none">
-    <div id="sb-scores"></div>
     <div class="week-scroll" id="score-week-tabs"></div>
     <div class="matches-grid" id="score-matches"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
   </div>
@@ -486,39 +474,48 @@ function renderAll(){
 }
 
 async function dbGet(key){
-  if(!SUPABASE_URL){console.error('No Supabase URL configured');return null;}
+  if(!SUPABASE_URL){console.error('No Supabase URL configured');return {error:true};}
   try{
     const r=await fetch(`${SUPABASE_URL}/rest/v1/pb_league?key=eq.${encodeURIComponent(key)}&select=value`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
-    if(!r.ok)return null;const data=await r.json();return data.length?data[0].value:null;
-  }catch(e){return null;}
+    if(!r.ok){ console.error('DB fetch failed:',r.status,r.statusText); return {error:true}; }
+    const data=await r.json();
+    return data.length ? {data:data[0].value} : {empty:true};
+  }catch(e){ console.error('DB fetch exception:',e); return {error:true}; }
 }
 async function dbSet(key,val){
   if(!SUPABASE_URL){console.error('No Supabase URL configured');return false;}
   try{
     const r=await fetch(`${SUPABASE_URL}/rest/v1/pb_league`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key,value:val,updated_at:new Date().toISOString()})});
-    return r.ok||r.status===201||r.status===200;
-  }catch(e){return false;}
+    if(!r.ok){ console.error('DB save failed:',r.status,r.statusText); return false; }
+    return true;
+  }catch(e){ console.error('DB save exception:',e); return false; }
 }
 async function loadData(){
-  const data=await dbGet('league_v1');
-  if(data){
-    if(data.schedule) schedule=data.schedule;
-    if(data.players) PLAYERS=data.players;
+  const result=await dbGet('league_v1');
+  if(result.error){
+    // Fetch failed — keep showing default schedule, do NOT write anything to DB
+    showToast('Could not reach database — showing default schedule');
+    console.warn('DB load failed, not overwriting remote data');
+  } else if(result.data){
+    // Successfully loaded data from DB
+    if(result.data.schedule) schedule=result.data.schedule;
+    if(result.data.players) PLAYERS=result.data.players;
   }
-  // Never auto-write to DB on load — only save when admin or player explicitly submits
+  // result.empty = row doesn't exist yet, also do nothing on load
   lastSynced=new Date();
 }
 async function saveData(){
+  // First verify we have a valid schedule before saving (must have at least 1 week with matches)
+  if(!schedule||!schedule.length||!schedule[0].matches||!schedule[0].matches.length){
+    console.error('Refusing to save empty schedule to DB');
+    showToast('Save blocked — schedule looks empty!');
+    return false;
+  }
   const ok=await dbSet('league_v1',{schedule,players:PLAYERS,updated:Date.now()});
   lastSynced=new Date();return ok;
 }
 
-function syncBarHTML(){
-  const t=lastSynced?lastSynced.toLocaleTimeString():'—';
-  const mode=useLocal?'Local storage mode':(SUPABASE_URL?'Live — Supabase':'Not connected');
-  const dot=useLocal?'':(SUPABASE_URL?'live':'err');
-  return `<div class="sync-bar"><div class="sync-dot ${dot}"></div><span>${mode}</span><span class="sync-time">Synced: ${t}</span><button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button></div>`;
-}
+
 async function refreshAll(){await loadData();renderAll();showToast('Refreshed!');}
 
 function getActivePlayers(){
@@ -563,7 +560,6 @@ function findCurrentWeek(){
 }
 
 function renderStandings(){
-  document.getElementById('sb-standings').innerHTML=syncBarHTML();
   const stats=getStats();
   const activePlayers=getActivePlayers();
   const rows=activePlayers.map(p=>{
@@ -600,7 +596,7 @@ function renderWeekTabs(cid,aw,fn){
   ).join('');
 }
 function renderScheduleMatches(week){
-  scheduleWeek=week;document.getElementById('sb-schedule').innerHTML=syncBarHTML();
+  scheduleWeek=week;
   renderWeekTabs('week-tabs',week,'setScheduleWeek');
   const wd=schedule.find(w=>w.week===week);if(!wd)return;
   const byePlayer = wd.bye || null;
@@ -622,7 +618,7 @@ function renderScheduleMatches(week){
 function setScheduleWeek(w){renderScheduleMatches(w);}
 
 function renderScoreMatches(week){
-  scoresWeek=week;document.getElementById('sb-scores').innerHTML=syncBarHTML();
+  scoresWeek=week;
   renderWeekTabs('score-week-tabs',week,'setScoresWeek');
   const wd=schedule.find(w=>w.week===week);if(!wd)return;
   const byePlayer2 = wd.bye || null;
