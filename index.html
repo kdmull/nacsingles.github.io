@@ -500,8 +500,11 @@ async function dbSet(key,val){
 }
 async function loadData(){
   const data=await dbGet('league_v1');
-  if(data){if(data.schedule)schedule=data.schedule;if(data.players)PLAYERS=data.players;}
-  else await dbSet('league_v1',{schedule,players:PLAYERS,updated:Date.now()});
+  if(data){
+    if(data.schedule) schedule=data.schedule;
+    if(data.players) PLAYERS=data.players;
+  }
+  // Never auto-write to DB on load — only save when admin or player explicitly submits
   lastSynced=new Date();
 }
 async function saveData(){
