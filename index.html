@@ -313,12 +313,12 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     <div class="nav-title">
     </div>
   </a>
+  <button class="back-btn" id="back-btn" style="display:none" onclick="goHome()">← Leagues</button>
   <div class="nav-tabs" style="display:none">
     <button class="nav-tab active" onclick="showPage('standings',this)">Standings</button>
     <button class="nav-tab" onclick="showPage('schedule',this)">Schedule</button>
     <button class="nav-tab" onclick="showPage('scores',this)">Scores</button>
   </div>
-  <button class="back-btn" id="back-btn" style="display:none" onclick="goHome()">← Leagues</button>
   <span id="league-name-badge" style="display:none;font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.5);margin-left:8px"></span>
 </nav>
 
