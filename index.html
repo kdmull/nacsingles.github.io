@@ -319,8 +319,11 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     <button class="nav-tab" onclick="showPage('schedule',this)">Schedule</button>
     <button class="nav-tab" onclick="showPage('scores',this)">Scores</button>
   </div>
-  <span id="league-name-badge" style="display:none;font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.5);margin-left:8px"></span>
 </nav>
+
+<!-- LEAGUE BANNER -->
+<div id="league-banner" style="display:none;background:var(--surface2);border-bottom:1px solid var(--border);padding:6px max(1.5rem,env(safe-area-inset-left));font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--navy)">
+</div>
 
 <!-- STANDINGS -->
 <div class="page active" id="page-standings">
@@ -902,6 +905,8 @@ function showHomePage(){
   currentLeagueKey='';
   currentLeagueName='';
   scoreAuthed=false;
+  const banner=document.getElementById('league-banner');
+  if(banner) banner.style.display='none';
   schedule=JSON.parse(JSON.stringify(SCHEDULE_DEFAULT));
   PLAYERS=['Jordan C.','Cordel B.','Ethan V.','Elias V.','Marcus T.','Devon W.','Chase H.','Riley S.','Jordan M.','Tanner B.','Cam P.'];
 }
@@ -926,8 +931,8 @@ async function selectLeague(id, name, dbKey){
   document.querySelector('nav .nav-tabs').style.display='flex';
   const backBtn=document.getElementById('back-btn');
   if(backBtn) backBtn.style.display='flex';
-  const badge=document.getElementById('league-name-badge');
-  if(badge){ badge.style.display='inline'; badge.textContent=name; }
+  const banner=document.getElementById('league-banner');
+  if(banner){ banner.style.display='block'; banner.textContent=name; }
 
   // Check for admin hash
   if(window.location.hash==='#admin'){
