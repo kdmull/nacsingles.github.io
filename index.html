@@ -171,7 +171,6 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .league-card-sub{font-size:13px;color:var(--muted)}
 .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:.7rem 1.5rem;transition:color .12s}
 .back-btn:hover{color:var(--navy)}
-.league-name-badge{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.6);padding:.5rem 1.5rem;border-top:1px solid rgba(255,255,255,.08);width:100%;text-align:center}
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
@@ -318,8 +317,8 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     <button class="nav-tab" onclick="showPage('scores',this)">Scores</button>
   </div>
   <button class="back-btn" id="back-btn" style="display:none" onclick="goHome()">← Leagues</button>
+  <span id="league-name-badge" style="display:none;font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.5);margin-left:8px"></span>
 </nav>
-<div class="league-name-badge" id="league-name-badge" style="display:none;background:var(--navy)"></div>
 
 <!-- STANDINGS -->
 <div class="page active" id="page-standings">
