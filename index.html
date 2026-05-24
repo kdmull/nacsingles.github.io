@@ -23,7 +23,7 @@
 body{background:var(--off-white);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.6;min-height:100vh;-webkit-text-size-adjust:100%}
 
 /* ── NAV ── */
-nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 max(1.5rem,env(safe-area-inset-left));display:flex;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--green)}
+nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 max(1.5rem,env(safe-area-inset-left));display:flex;align-items:center;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--green)}
 .nav-brand{display:flex;align-items:center;gap:12px;padding:.65rem 0;margin-right:auto;text-decoration:none}
 .nav-logo{height:44px;width:auto}
 .nav-title{display:flex;flex-direction:column;line-height:1}
@@ -175,13 +175,15 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
   /* Nav */
-  nav{padding:0 1rem;flex-wrap:wrap}
-  .nav-brand{padding:.6rem 0;margin-right:0;width:100%;justify-content:center}
+  nav{padding:0 1rem}
+  nav.in-league{flex-wrap:wrap}
+  .nav-brand{padding:.6rem 0}
+  nav.in-league .nav-brand{margin-right:0;width:100%;justify-content:center}
   .nav-logo{height:36px}
   .nav-title-main{font-size:17px}
   .nav-title-sub{font-size:10px;letter-spacing:2px}
-  .nav-tabs{width:100%;border-top:1px solid rgba(255,255,255,.08);overflow-x:auto;scrollbar-width:none}
-  .nav-tabs::-webkit-scrollbar{display:none}
+  nav.in-league .nav-tabs{width:100%;border-top:1px solid rgba(255,255,255,.08);overflow-x:auto;scrollbar-width:none}
+  nav.in-league .nav-tabs::-webkit-scrollbar{display:none}
   .nav-tab{flex:1;padding:.7rem .5rem;font-size:13px;text-align:center;min-width:70px}
 
   /* Pages */
@@ -892,14 +894,10 @@ function exportJSON(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nitro-pickleball-schedule.json';a.click();showToast('Exported!');
 }
 function showHomePage(){
-  // Hide all league pages, show home
+  // Hide nav and all league pages, show home only
+  document.querySelector('nav').style.display='none';
   document.getElementById('page-home').style.display='block';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelector('nav .nav-tabs').style.display='none';
-  const backBtn=document.getElementById('back-btn');
-  if(backBtn) backBtn.style.display='none';
-  const badge=document.getElementById('league-name-badge');
-  if(badge) badge.style.display='none';
   // Reset league state
   currentLeagueKey='';
   currentLeagueName='';
@@ -922,12 +920,14 @@ async function selectLeague(id, name, dbKey){
   scoresWeek=scheduleWeek=findCurrentWeek();
 
   // Hide home, show league UI
+  document.querySelector('nav').style.display='flex';
+  document.querySelector('nav').classList.add('in-league');
   document.getElementById('page-home').style.display='none';
   document.querySelector('nav .nav-tabs').style.display='flex';
   const backBtn=document.getElementById('back-btn');
   if(backBtn) backBtn.style.display='flex';
   const badge=document.getElementById('league-name-badge');
-  if(badge){ badge.style.display='block'; badge.textContent=name; }
+  if(badge){ badge.style.display='inline'; badge.textContent=name; }
 
   // Check for admin hash
   if(window.location.hash==='#admin'){
@@ -939,6 +939,7 @@ async function selectLeague(id, name, dbKey){
 
 function goHome(){
   window.location.hash='';
+  document.querySelector('nav').classList.remove('in-league');
   showHomePage();
 }
 
