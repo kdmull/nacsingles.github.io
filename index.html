@@ -353,7 +353,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 <div class="page" id="page-schedule">
   <div class="section-header">
     <div class="section-accent"></div>
-    <div class="section-header-text"><h2>Schedule</h2><p>11-week round robin — all 12 players</p></div>
+    <div class="section-header-text"><h2>Schedule</h2><p id="schedule-subtitle">Loading...</p></div>
   </div>
   <div class="week-scroll" id="week-tabs"></div>
   <div class="matches-grid" id="schedule-matches"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
@@ -674,6 +674,8 @@ function renderWeekTabs(cid,aw,fn){
 }
 function renderScheduleMatches(week){
   scheduleWeek=week;
+  const sub=document.getElementById('schedule-subtitle');
+  if(sub) sub.textContent=leagueType==='doubles'?'8-week round robin':'11-week round robin';
   renderWeekTabs('week-tabs',week,'setScheduleWeek');
   const wd=schedule.find(w=>w.week===week);if(!wd)return;
   const byePlayer = wd.bye || null;
