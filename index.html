@@ -837,7 +837,19 @@ function checkAdmin(){
   }else{document.getElementById('admin-err').textContent='Incorrect password.';}
 }
 function renderAdminPanel(){
-  document.getElementById('admin-week-sel').innerHTML=schedule.map(w=>`<option value="${w.week}">Week ${w.week}</option>`).join('');
+  const sel=document.getElementById('admin-week-sel');
+  sel.innerHTML=schedule.map(w=>`<option value="${w.week}">Week ${w.week}</option>`).join('');
+  // Show/hide add week button
+  let addWeekBtn=document.getElementById('add-week-btn');
+  if(!addWeekBtn){
+    addWeekBtn=document.createElement('button');
+    addWeekBtn.id='add-week-btn';
+    addWeekBtn.className='btn btn-ghost';
+    addWeekBtn.style.cssText='font-size:12px;padding:6px 12px';
+    addWeekBtn.textContent='+ Add Week';
+    addWeekBtn.onclick=addWeek;
+    sel.parentNode.appendChild(addWeekBtn);
+  }
   document.getElementById('admin-players').innerHTML=PLAYERS.map((p,i)=>
     `<div style="display:flex;align-items:center;gap:4px">
       <input class="admin-input" style="width:110px" value="${p}" onchange="PLAYERS[${i}]=this.value"/>
@@ -849,6 +861,10 @@ function renderAdminPanel(){
 function renderAdminMatches(){
   const week=parseInt(document.getElementById('admin-week-sel').value);
   const wd=schedule.find(w=>w.week===week);
+  if(!wd){
+    document.getElementById('admin-matches').innerHTML='<p style="color:var(--muted);font-size:13px;padding:8px 0">No weeks yet — click "+ Add Week" to get started.</p>';
+    return;
+  }
   document.getElementById('admin-matches').innerHTML=wd.matches.map((m,i)=>`
     <div class="admin-match-row">
       <span style="color:var(--muted);font-family:var(--font-display);font-size:12px;text-transform:uppercase">M${i+1}</span>
@@ -860,8 +876,18 @@ function renderAdminMatches(){
       <button class="btn btn-danger" style="font-size:11px;padding:4px 8px" onclick="removeMatch(${week},${i})">Remove</button>
     </div>`).join('');
 }
+function addWeek(){
+  const nextWeek = schedule.length ? Math.max(...schedule.map(w=>w.week))+1 : 1;
+  schedule.push({week:nextWeek, matches:[]});
+  renderAdminPanel();
+  // Select the new week
+  document.getElementById('admin-week-sel').value=nextWeek;
+  renderAdminMatches();
+  showToast('Week '+nextWeek+' added');
+}
 function addMatch(){
   const week=parseInt(document.getElementById('admin-week-sel').value);
+  if(!week||!schedule.find(w=>w.week===week)){showToast('Add a week first!');return;}
   schedule.find(w=>w.week===week).matches.push({p1:PLAYERS[0],p2:PLAYERS[1],games:[]});
   renderAdminMatches();
 }
