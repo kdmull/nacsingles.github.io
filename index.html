@@ -79,6 +79,10 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 /* ── MATCH CARDS ── */
 .matches-grid{display:flex;flex-direction:column;gap:10px}
 .match-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 18px;display:flex;align-items:center;gap:16px;transition:border-color .12s;box-shadow:0 1px 3px rgba(26,42,108,.05)}
+.doubles-match-layout{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
+.doubles-team{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.doubles-team .match-player{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doubles-team.winner .match-player{color:var(--green-dark)}
 .match-card:hover{border-color:rgba(26,42,108,.3)}
 .match-card.completed{border-left:4px solid var(--green)}
 .match-card.upcoming{border-left:4px solid var(--surface2)}
@@ -680,11 +684,26 @@ function renderScheduleMatches(week){
     const scoreStr = r.complete
       ? `<span style="color:var(--green-dark);font-size:13px;font-weight:700">${r.winner}</span> wins ${r.p1w>r.p2w?r.p1w+'-'+r.p2w:r.p2w+'-'+r.p1w}`
       : (gamesPlayed>0 ? `Game ${gamesPlayed+1}` : '—');
-    const t1 = r.isDoubles ? `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1a}</span><br><span class="match-player${r.winner===r.team1?' winner':''}" style="font-size:13px">${m.p1b}</span>` : `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1}</span>`;
-    const t2 = r.isDoubles ? `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2a}</span><br><span class="match-player${r.winner===r.team2?' winner':''}" style="font-size:13px">${m.p2b}</span>` : `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2}</span>`;
+    const matchInner = r.isDoubles
+      ? `<div class="doubles-match-layout">
+           <div class="doubles-team ${r.winner===r.team1?'winner':''}">
+             <span class="match-player ${r.winner===r.team1?'winner':''}">${m.p1a}</span>
+             <span class="match-player ${r.winner===r.team1?'winner':''}">${m.p1b}</span>
+           </div>
+           <span class="vs-badge">vs</span>
+           <div class="doubles-team ${r.winner===r.team2?'winner':''}">
+             <span class="match-player ${r.winner===r.team2?'winner':''}">${m.p2a}</span>
+             <span class="match-player ${r.winner===r.team2?'winner':''}">${m.p2b}</span>
+           </div>
+         </div>`
+      : `<div class="match-players">
+           <span class="match-player ${r.winner===r.team1?'winner':''}">${m.p1}</span>
+           <span class="vs-badge">vs</span>
+           <span class="match-player ${r.winner===r.team2?'winner':''}">${m.p2}</span>
+         </div>`;
     return`<div class="match-card ${r.complete?'completed':'upcoming'}">
       <div class="match-num">Match ${i+1}</div>
-      <div class="match-players">${t1}<span class="vs-badge">vs</span>${t2}</div>
+      ${matchInner}
       <div class="match-score" style="font-size:13px;min-width:110px">${scoreStr}</div>
       <div class="match-status ${r.complete?'':'pending'}">${r.complete?'Final':'Pending'}</div>
     </div>`;
@@ -704,11 +723,26 @@ function renderScoreMatches(week){
     const scoreStr = r.complete
       ? `<span style="font-size:12px;color:var(--green-dark);font-weight:700">${r.winner} wins ${r.p1w>r.p2w?r.p1w+'-'+r.p2w:r.p2w+'-'+r.p1w}</span>`
       : (gamesPlayed>0 ? `<span style="font-size:12px;color:var(--muted)">In progress (G${gamesPlayed+1})</span>` : `<span style="font-size:12px;color:var(--muted)">Not started</span>`);
-    const t1 = r.isDoubles ? `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1a} / ${m.p1b}</span>` : `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1}</span>`;
-    const t2 = r.isDoubles ? `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2a} / ${m.p2b}</span>` : `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2}</span>`;
+    const matchInner2 = r.isDoubles
+      ? `<div class="doubles-match-layout">
+           <div class="doubles-team ${r.winner===r.team1?'winner':''}">
+             <span class="match-player ${r.winner===r.team1?'winner':''}">${m.p1a}</span>
+             <span class="match-player ${r.winner===r.team1?'winner':''}">${m.p1b}</span>
+           </div>
+           <span class="vs-badge">vs</span>
+           <div class="doubles-team ${r.winner===r.team2?'winner':''}">
+             <span class="match-player ${r.winner===r.team2?'winner':''}">${m.p2a}</span>
+             <span class="match-player ${r.winner===r.team2?'winner':''}">${m.p2b}</span>
+           </div>
+         </div>`
+      : `<div class="match-players">
+           <span class="match-player ${r.winner===r.team1?'winner':''}">${m.p1}</span>
+           <span class="vs-badge">vs</span>
+           <span class="match-player ${r.winner===r.team2?'winner':''}">${m.p2}</span>
+         </div>`;
     return`<div class="match-card ${r.complete?'completed':'upcoming'}">
       <div class="match-num">Match ${i+1}</div>
-      <div class="match-players">${t1}<span class="vs-badge">vs</span>${t2}</div>
+      ${matchInner2}
       <div class="match-score" style="font-size:12px;min-width:120px">${scoreStr}</div>
       <button class="score-btn" onclick="openModal(${week},${i})">${r.complete?'Edit':'Enter Scores'}</button>
     </div>`;
