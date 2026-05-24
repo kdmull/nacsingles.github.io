@@ -167,7 +167,6 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 /* ── LEAGUE CARDS ── */
 .league-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(26,42,108,.05);display:flex;flex-direction:column;gap:6px}
 .league-card:hover{border-color:var(--navy);box-shadow:0 4px 16px rgba(26,42,108,.12);transform:translateY(-2px)}
-.league-card-icon{font-size:28px;margin-bottom:4px}
 .league-card-title{font-family:var(--font-display);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--navy)}
 .league-card-sub{font-size:13px;color:var(--muted)}
 .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:.7rem 1.5rem;transition:color .12s}
@@ -261,33 +260,27 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
       <div class="league-card" onclick="selectLeague('singles','Singles League','league_singles')">
-        <div class="league-card-icon">🏆</div>
-        <div class="league-card-title">Singles</div>
+          <div class="league-card-title">Singles</div>
         <div class="league-card-sub">Open singles league</div>
       </div>
       <div class="league-card" onclick="selectLeague('beginner','All Ages Beginner','league_beginner')">
-        <div class="league-card-icon">🌱</div>
-        <div class="league-card-title">All Ages Beginner</div>
+          <div class="league-card-title">All Ages Beginner</div>
         <div class="league-card-sub">Under 3.0 rating</div>
       </div>
       <div class="league-card" onclick="selectLeague('int1949','19-49 Intermediate','league_int1949')">
-        <div class="league-card-icon">⚡</div>
-        <div class="league-card-title">19-49 Intermediate</div>
+          <div class="league-card-title">19-49 Intermediate</div>
         <div class="league-card-sub">3.0 – 3.4 rating</div>
       </div>
       <div class="league-card" onclick="selectLeague('int50','50+ Intermediate','league_int50')">
-        <div class="league-card-icon">⚡</div>
-        <div class="league-card-title">50+ Intermediate</div>
+          <div class="league-card-title">50+ Intermediate</div>
         <div class="league-card-sub">3.0 – 3.4 rating</div>
       </div>
       <div class="league-card" onclick="selectLeague('adv1949','19-49 Advanced','league_adv1949')">
-        <div class="league-card-icon">🔥</div>
-        <div class="league-card-title">19-49 Advanced</div>
+          <div class="league-card-title">19-49 Advanced</div>
         <div class="league-card-sub">3.5 & up rating</div>
       </div>
       <div class="league-card" onclick="selectLeague('adv50','50+ Advanced','league_adv50')">
-        <div class="league-card-icon">🔥</div>
-        <div class="league-card-title">50+ Advanced</div>
+          <div class="league-card-title">50+ Advanced</div>
         <div class="league-card-sub">3.5 & up rating</div>
       </div>
     </div>
@@ -490,17 +483,9 @@ let scoreAuthed=false;
 let currentLeagueKey='';
 let currentLeagueName='';
 
-window.addEventListener('DOMContentLoaded',async()=>{
+window.addEventListener('DOMContentLoaded',()=>{
   useLocal=false;
-
-  await loadData();
-  scoresWeek=scheduleWeek=findCurrentWeek();
-  // Check for #admin hash to show hidden admin page
-  if(window.location.hash==='#admin'){
-    showAdminPage();
-  } else {
-    renderAll();
-  }
+  showHomePage();
 });
 
 // Listen for hash changes
