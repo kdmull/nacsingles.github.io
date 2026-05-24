@@ -260,27 +260,27 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
       <p style="color:var(--muted);font-size:15px">Select a league to view standings, schedule, and scores</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
-      <div class="league-card" onclick="selectLeague('singles','Singles League','league_singles')">
+      <div class="league-card" onclick="selectLeague('singles','Singles League','league_singles','singles')">
           <div class="league-card-title">Singles</div>
         <div class="league-card-sub">Open singles league</div>
       </div>
-      <div class="league-card" onclick="selectLeague('beginner','All Ages Beginner','league_beginner')">
+      <div class="league-card" onclick="selectLeague('beginner','All Ages Beginner','league_beginner','doubles')">
           <div class="league-card-title">All Ages Beginner</div>
         <div class="league-card-sub">Under 3.0 rating</div>
       </div>
-      <div class="league-card" onclick="selectLeague('int1949','19-49 Intermediate','league_int1949')">
+      <div class="league-card" onclick="selectLeague('int1949','19-49 Intermediate','league_int1949','doubles')">
           <div class="league-card-title">19-49 Intermediate</div>
         <div class="league-card-sub">3.0 – 3.4 rating</div>
       </div>
-      <div class="league-card" onclick="selectLeague('int50','50+ Intermediate','league_int50')">
+      <div class="league-card" onclick="selectLeague('int50','50+ Intermediate','league_int50','doubles')">
           <div class="league-card-title">50+ Intermediate</div>
         <div class="league-card-sub">3.0 – 3.4 rating</div>
       </div>
-      <div class="league-card" onclick="selectLeague('adv1949','19-49 Advanced','league_adv1949')">
+      <div class="league-card" onclick="selectLeague('adv1949','19-49 Advanced','league_adv1949','doubles')">
           <div class="league-card-title">19-49 Advanced</div>
         <div class="league-card-sub">3.5 & up rating</div>
       </div>
-      <div class="league-card" onclick="selectLeague('adv50','50+ Advanced','league_adv50')">
+      <div class="league-card" onclick="selectLeague('adv50','50+ Advanced','league_adv50','doubles')">
           <div class="league-card-title">50+ Advanced</div>
         <div class="league-card-sub">3.5 & up rating</div>
       </div>
@@ -486,6 +486,7 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 let scoreAuthed=false;
 let currentLeagueKey='';
 let currentLeagueName='';
+let leagueType='singles'; // 'singles' or 'doubles'
 
 window.addEventListener('DOMContentLoaded',()=>{
   useLocal=false;
@@ -573,7 +574,7 @@ function getActivePlayers(){
   return ordered;
 }
 
-// Returns series result for a match
+// Returns series result for a match (handles singles and doubles)
 function seriesResult(m){
   const games = m.games || [];
   let p1w=0, p2w=0, pts1=0, pts2=0;
@@ -583,10 +584,14 @@ function seriesResult(m){
     pts1+=g.s1; pts2+=g.s2;
   }
   const complete = p1w>=2 || p2w>=2;
-  const winner = complete ? (p1w>p2w ? m.p1 : m.p2) : null;
-  const loser  = complete ? (p1w>p2w ? m.p2 : m.p1) : null;
+  // Doubles: team name is "p1a / p1b" vs "p2a / p2b"
+  const isDoubles = m.p1a !== undefined;
+  const team1 = isDoubles ? `${m.p1a} / ${m.p1b}` : m.p1;
+  const team2 = isDoubles ? `${m.p2a} / ${m.p2b}` : m.p2;
+  const winner = complete ? (p1w>p2w ? team1 : team2) : null;
+  const loser  = complete ? (p1w>p2w ? team2 : team1) : null;
   const seriesStr = p1w+'-'+p2w;
-  return {p1w,p2w,pts1,pts2,complete,winner,loser,seriesStr};
+  return {p1w,p2w,pts1,pts2,complete,winner,loser,seriesStr,team1,team2,isDoubles};
 }
 
 function getStats(){
@@ -595,8 +600,21 @@ function getStats(){
   for(const w of schedule) for(const m of w.matches){
     const r=seriesResult(m);
     if(r.complete){
-      if(s[r.winner]){s[r.winner].w++;s[r.winner].pts+=r.winner===m.p1?r.pts1:r.pts2;s[r.winner].opp+=r.winner===m.p1?r.pts2:r.pts1;s[r.winner].streak.push('W');}
-      if(s[r.loser]) {s[r.loser].l++; s[r.loser].pts+=r.loser===m.p1?r.pts1:r.pts2;  s[r.loser].opp+=r.loser===m.p1?r.pts2:r.pts1;   s[r.loser].streak.push('L');}
+      if(r.isDoubles){
+        // For doubles, credit both players on each team
+        const winPlayers=[m.p1a,m.p1b].filter(Boolean);
+        const losPlayers=[m.p2a,m.p2b].filter(Boolean);
+        const winPts=r.p1w>r.p2w?r.pts1:r.pts2, losPts=r.p1w>r.p2w?r.pts2:r.pts1;
+        if(r.winner===r.team2){ winPlayers.push(...[m.p2a,m.p2b].filter(Boolean)); losPlayers.length=0; losPlayers.push(...[m.p1a,m.p1b].filter(Boolean)); }
+        const wp=r.p1w>r.p2w?[m.p1a,m.p1b]:[m.p2a,m.p2b];
+        const lp=r.p1w>r.p2w?[m.p2a,m.p2b]:[m.p1a,m.p1b];
+        const wpts=r.p1w>r.p2w?r.pts1:r.pts2, lpts=r.p1w>r.p2w?r.pts2:r.pts1;
+        for(const p of wp.filter(Boolean)){ if(s[p]){s[p].w++;s[p].pts+=wpts;s[p].opp+=lpts;s[p].streak.push('W');} }
+        for(const p of lp.filter(Boolean)){ if(s[p]){s[p].l++;s[p].pts+=lpts;s[p].opp+=wpts;s[p].streak.push('L');} }
+      } else {
+        if(s[r.winner]){s[r.winner].w++;s[r.winner].pts+=r.winner===m.p1?r.pts1:r.pts2;s[r.winner].opp+=r.winner===m.p1?r.pts2:r.pts1;s[r.winner].streak.push('W');}
+        if(s[r.loser]) {s[r.loser].l++; s[r.loser].pts+=r.loser===m.p1?r.pts1:r.pts2;  s[r.loser].opp+=r.loser===m.p1?r.pts2:r.pts1;   s[r.loser].streak.push('L');}
+      }
     }
   }
   return s;
@@ -654,9 +672,11 @@ function renderScheduleMatches(week){
     const scoreStr = r.complete
       ? `<span style="color:var(--green-dark);font-size:13px;font-weight:700">${r.winner}</span> wins ${r.p1w>r.p2w?r.p1w+'-'+r.p2w:r.p2w+'-'+r.p1w}`
       : (gamesPlayed>0 ? `Game ${gamesPlayed+1}` : '—');
+    const t1 = r.isDoubles ? `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1a}</span><br><span class="match-player${r.winner===r.team1?' winner':''}" style="font-size:13px">${m.p1b}</span>` : `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1}</span>`;
+    const t2 = r.isDoubles ? `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2a}</span><br><span class="match-player${r.winner===r.team2?' winner':''}" style="font-size:13px">${m.p2b}</span>` : `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2}</span>`;
     return`<div class="match-card ${r.complete?'completed':'upcoming'}">
       <div class="match-num">Match ${i+1}</div>
-      <div class="match-players"><span class="match-player${r.winner===m.p1?' winner':''}">${m.p1}</span><span class="vs-badge">vs</span><span class="match-player${r.winner===m.p2?' winner':''}">${m.p2}</span></div>
+      <div class="match-players">${t1}<span class="vs-badge">vs</span>${t2}</div>
       <div class="match-score" style="font-size:13px;min-width:110px">${scoreStr}</div>
       <div class="match-status ${r.complete?'':'pending'}">${r.complete?'Final':'Pending'}</div>
     </div>`;
@@ -676,9 +696,11 @@ function renderScoreMatches(week){
     const scoreStr = r.complete
       ? `<span style="font-size:12px;color:var(--green-dark);font-weight:700">${r.winner} wins ${r.p1w>r.p2w?r.p1w+'-'+r.p2w:r.p2w+'-'+r.p1w}</span>`
       : (gamesPlayed>0 ? `<span style="font-size:12px;color:var(--muted)">In progress (G${gamesPlayed+1})</span>` : `<span style="font-size:12px;color:var(--muted)">Not started</span>`);
+    const t1 = r.isDoubles ? `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1a} / ${m.p1b}</span>` : `<span class="match-player${r.winner===r.team1?' winner':''}">${m.p1}</span>`;
+    const t2 = r.isDoubles ? `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2a} / ${m.p2b}</span>` : `<span class="match-player${r.winner===r.team2?' winner':''}">${m.p2}</span>`;
     return`<div class="match-card ${r.complete?'completed':'upcoming'}">
       <div class="match-num">Match ${i+1}</div>
-      <div class="match-players"><span class="match-player${r.winner===m.p1?' winner':''}">${m.p1}</span><span class="vs-badge">vs</span><span class="match-player${r.winner===m.p2?' winner':''}">${m.p2}</span></div>
+      <div class="match-players">${t1}<span class="vs-badge">vs</span>${t2}</div>
       <div class="match-score" style="font-size:12px;min-width:120px">${scoreStr}</div>
       <button class="score-btn" onclick="openModal(${week},${i})">${r.complete?'Edit':'Enter Scores'}</button>
     </div>`;
@@ -691,8 +713,9 @@ function openModal(week,idx){
   currentModalMatch={week,idx};
   document.getElementById('modal-p1').textContent=m.p1;
   document.getElementById('modal-p2').textContent=m.p2;
-  const lbl1=document.getElementById('col-p1-label');if(lbl1)lbl1.textContent=m.p1.split(' ')[0];
-  const lbl2=document.getElementById('col-p2-label');if(lbl2)lbl2.textContent=m.p2.split(' ')[0];
+  const r2=seriesResult(m);
+  const lbl1=document.getElementById('col-p1-label');if(lbl1)lbl1.textContent=r2.isDoubles?m.p1a.split(' ')[0]+'/'+m.p1b.split(' ')[0]:m.p1.split(' ')[0];
+  const lbl2=document.getElementById('col-p2-label');if(lbl2)lbl2.textContent=r2.isDoubles?m.p2a.split(' ')[0]+'/'+m.p2b.split(' ')[0]:m.p2.split(' ')[0];
   document.getElementById('submit-btn').disabled=false;
   renderModalGames(m);
   document.getElementById('score-modal').classList.add('open');
@@ -865,16 +888,26 @@ function renderAdminMatches(){
     document.getElementById('admin-matches').innerHTML='<p style="color:var(--muted);font-size:13px;padding:8px 0">No weeks yet — click "+ Add Week" to get started.</p>';
     return;
   }
-  document.getElementById('admin-matches').innerHTML=wd.matches.map((m,i)=>`
-    <div class="admin-match-row">
+  const isDoubles = leagueType==='doubles';
+  document.getElementById('admin-matches').innerHTML=wd.matches.map((m,i)=>{
+    const playerOpts=(sel)=>PLAYERS.map(p=>`<option${p===sel?' selected':''}>${p}</option>`).join('');
+    const r=seriesResult(m);
+    const team1Selects = isDoubles
+      ? `<div style="display:flex;flex-direction:column;gap:3px"><select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p1a=this.value">${playerOpts(m.p1a)}</select><select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p1b=this.value">${playerOpts(m.p1b)}</select></div>`
+      : `<select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p1=this.value">${playerOpts(m.p1)}</select>`;
+    const team2Selects = isDoubles
+      ? `<div style="display:flex;flex-direction:column;gap:3px"><select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p2a=this.value">${playerOpts(m.p2a)}</select><select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p2b=this.value">${playerOpts(m.p2b)}</select></div>`
+      : `<select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p2=this.value">${playerOpts(m.p2)}</select>`;
+    return`<div class="admin-match-row">
       <span style="color:var(--muted);font-family:var(--font-display);font-size:12px;text-transform:uppercase">M${i+1}</span>
-      <select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p1=this.value">${PLAYERS.map(p=>`<option${p===m.p1?' selected':''}>${p}</option>`).join('')}</select>
+      ${team1Selects}
       <span class="vs-col" style="text-align:center;color:var(--muted);font-family:var(--font-display);font-size:11px">vs</span>
-      <select class="admin-input" onchange="schedule.find(w=>w.week===${week}).matches[${i}].p2=this.value">${PLAYERS.map(p=>`<option${p===m.p2?' selected':''}>${p}</option>`).join('')}</select>
-      <span style="font-size:11px;color:var(--muted);font-family:var(--font-display)">${(()=>{const r=seriesResult(m);return r.complete?r.winner+' ('+r.seriesStr+')':'In progress';})()}</span>
+      ${team2Selects}
+      <span style="font-size:11px;color:var(--muted);font-family:var(--font-display)">${r.complete?r.winner+' ('+r.seriesStr+')':'In progress'}</span>
       <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;white-space:nowrap" onclick="adminClearSeries(${week},${i})">Clear</button>
       <button class="btn btn-danger" style="font-size:11px;padding:4px 8px" onclick="removeMatch(${week},${i})">Remove</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function addWeek(){
   const nextWeek = schedule.length ? Math.max(...schedule.map(w=>w.week))+1 : 1;
@@ -888,7 +921,11 @@ function addWeek(){
 function addMatch(){
   const week=parseInt(document.getElementById('admin-week-sel').value);
   if(!week||!schedule.find(w=>w.week===week)){showToast('Add a week first!');return;}
-  schedule.find(w=>w.week===week).matches.push({p1:PLAYERS[0],p2:PLAYERS[1],games:[]});
+  if(leagueType==='doubles'){
+    schedule.find(w=>w.week===week).matches.push({p1a:PLAYERS[0],p1b:PLAYERS[1],p2a:PLAYERS[2]||PLAYERS[0],p2b:PLAYERS[3]||PLAYERS[1],games:[]});
+  } else {
+    schedule.find(w=>w.week===week).matches.push({p1:PLAYERS[0],p2:PLAYERS[1],games:[]});
+  }
   renderAdminMatches();
 }
 function removeMatch(week,idx){schedule.find(w=>w.week===week).matches.splice(idx,1);renderAdminMatches();}
@@ -937,9 +974,10 @@ function showHomePage(){
   PLAYERS=['Jordan C.','Cordel B.','Ethan V.','Elias V.','Marcus T.','Devon W.','Chase H.','Riley S.','Jordan M.','Tanner B.','Cam P.'];
 }
 
-async function selectLeague(id, name, dbKey){
+async function selectLeague(id, name, dbKey, type){
   currentLeagueKey=dbKey;
   currentLeagueName=name;
+  leagueType=type||'singles';
   scoreAuthed=false;
 
   // Reset to defaults before loading
