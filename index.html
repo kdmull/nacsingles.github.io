@@ -171,6 +171,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .league-card-sub{font-size:13px;color:var(--muted)}
 .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--white);font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:.7rem 1.5rem;transition:color .12s;border-right:1px solid rgba(255,255,255,.15)}
 .back-btn:hover{color:var(--green)}
+@media(max-width:768px){.back-btn{display:none!important}}
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
@@ -255,8 +256,8 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 <div id="page-home" style="display:none">
   <div style="max-width:700px;margin:0 auto;padding:2rem 1.5rem">
     <div style="text-align:center;padding:2rem 0 2.5rem">
-      <img src="logo.png" style="height:80px;margin-bottom:1rem" onerror="this.style.display='none'" />
-      <h1 style="font-family:var(--font-display);font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--navy);margin-bottom:.4rem">Nitro Pickleball</h1>
+      <img src="logo.jpeg" style="height:120px;width:auto;margin-bottom:1rem;object-fit:contain" onerror="this.style.display='none'" />
+      <h1 style="font-family:var(--font-display);font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--navy);margin-bottom:.4rem">NAC Leagues</h1>
       <p style="color:var(--muted);font-size:15px">Select a league to view standings, schedule, and scores</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
