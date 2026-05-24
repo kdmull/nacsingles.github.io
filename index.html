@@ -568,7 +568,18 @@ async function refreshAll(){await loadData();renderAll();showToast('Refreshed!')
 
 function getActivePlayers(){
   const seen=new Set();
-  for(const w of schedule) for(const m of w.matches){ seen.add(m.p1); seen.add(m.p2); }
+  for(const w of schedule) for(const m of w.matches){
+    if(m.p1a!==undefined){
+      // doubles
+      if(m.p1a) seen.add(m.p1a);
+      if(m.p1b) seen.add(m.p1b);
+      if(m.p2a) seen.add(m.p2a);
+      if(m.p2b) seen.add(m.p2b);
+    } else {
+      if(m.p1) seen.add(m.p1);
+      if(m.p2) seen.add(m.p2);
+    }
+  }
   const ordered=PLAYERS.filter(p=>seen.has(p));
   seen.forEach(p=>{ if(!ordered.includes(p)) ordered.push(p); });
   return ordered;
@@ -601,14 +612,10 @@ function getStats(){
     const r=seriesResult(m);
     if(r.complete){
       if(r.isDoubles){
-        // For doubles, credit both players on each team
-        const winPlayers=[m.p1a,m.p1b].filter(Boolean);
-        const losPlayers=[m.p2a,m.p2b].filter(Boolean);
-        const winPts=r.p1w>r.p2w?r.pts1:r.pts2, losPts=r.p1w>r.p2w?r.pts2:r.pts1;
-        if(r.winner===r.team2){ winPlayers.push(...[m.p2a,m.p2b].filter(Boolean)); losPlayers.length=0; losPlayers.push(...[m.p1a,m.p1b].filter(Boolean)); }
-        const wp=r.p1w>r.p2w?[m.p1a,m.p1b]:[m.p2a,m.p2b];
-        const lp=r.p1w>r.p2w?[m.p2a,m.p2b]:[m.p1a,m.p1b];
-        const wpts=r.p1w>r.p2w?r.pts1:r.pts2, lpts=r.p1w>r.p2w?r.pts2:r.pts1;
+        const wp = r.p1w>r.p2w ? [m.p1a,m.p1b] : [m.p2a,m.p2b];
+        const lp = r.p1w>r.p2w ? [m.p2a,m.p2b] : [m.p1a,m.p1b];
+        const wpts = r.p1w>r.p2w ? r.pts1 : r.pts2;
+        const lpts = r.p1w>r.p2w ? r.pts2 : r.pts1;
         for(const p of wp.filter(Boolean)){ if(s[p]){s[p].w++;s[p].pts+=wpts;s[p].opp+=lpts;s[p].streak.push('W');} }
         for(const p of lp.filter(Boolean)){ if(s[p]){s[p].l++;s[p].pts+=lpts;s[p].opp+=wpts;s[p].streak.push('L');} }
       } else {
