@@ -141,6 +141,31 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
         </div>
       </div>
     </div>
+
+    <div class="admin-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <h3 style="margin:0">Score Log</h3>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="loadScoreLog()">↻ Refresh Log</button>
+      </div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table style="width:100%;border-collapse:collapse;min-width:560px">
+          <thead>
+            <tr style="background:var(--surface2)">
+              <th style="font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Time</th>
+              <th style="font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">League</th>
+              <th style="font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Week</th>
+              <th style="font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Match</th>
+              <th style="font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Winner</th>
+              <th style="font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Games</th>
+            </tr>
+          </thead>
+          <tbody id="score-log-body">
+            <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load score history.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -295,6 +320,7 @@ function exportJSON(){
 
 async function loadScoreLog(){
   const logSection=document.getElementById('score-log-body');
+  if(!logSection){ console.warn('score-log-body not found'); return; }
   logSection.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)"><div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="spinner"></div>Loading...</div></td></tr>';
   try{
     const leagueFilter = currentLeague ? `&league_key=eq.${encodeURIComponent(currentLeague.key)}` : '';
