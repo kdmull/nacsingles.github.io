@@ -71,7 +71,7 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
   .stats-row{grid-template-columns:repeat(2,1fr)}
   .stat-val{font-size:24px}
   .section{padding:1rem}
-  .history-table th:nth-child(4),.history-table td:nth-child(4){display:none}
+  .history-table th:nth-child(5),.history-table td:nth-child(5){display:none}
   .back-btn{display:none}
 }
 </style>
@@ -133,24 +133,28 @@ function renderProfile(playerName) {
     for(const m of w.matches) {
       const r = seriesResult(m);
       const isDoubles = m.p1a !== undefined;
-      let involved = false, won = false, opponent = '';
+      let involved = false, won = false, opponent = '', partner = '';
       if(isDoubles) {
         const myTeam = [m.p1a,m.p1b].includes(playerName) ? 'team1' : [m.p2a,m.p2b].includes(playerName) ? 'team2' : null;
         if(myTeam) {
           involved = true;
           won = r.complete && ((myTeam==='team1' && r.p1w>r.p2w)||(myTeam==='team2' && r.p2w>r.p1w));
           opponent = myTeam==='team1' ? `${m.p2a} / ${m.p2b}` : `${m.p1a} / ${m.p1b}`;
+          // Partner is the other player on the same team
+          const myTeamPlayers = myTeam==='team1' ? [m.p1a,m.p1b] : [m.p2a,m.p2b];
+          partner = myTeamPlayers.find(p => p !== playerName) || '';
         }
       } else {
         if(m.p1===playerName||m.p2===playerName) {
           involved = true;
           won = r.complete && r.winner === playerName;
           opponent = m.p1===playerName ? m.p2 : m.p1;
+          partner = '';
         }
       }
       if(involved) {
         const games = (m.games||[]).filter(g=>g.s1!==null);
-        matches.push({week:w.week, opponent, won, complete:r.complete, games, seriesStr:r.seriesStr, winner:r.winner});
+        matches.push({week:w.week, partner, opponent, won, complete:r.complete, games, seriesStr:r.seriesStr, winner:r.winner});
       }
     }
   }
@@ -188,13 +192,14 @@ function renderProfile(playerName) {
       <div style="overflow-x:auto">
         <table class="history-table">
           <thead><tr>
-            <th>Week</th><th>Opponent</th><th>Result</th><th>Games</th><th>Series</th>
+            <th>Week</th><th>Partner</th><th>Opponent</th><th>Result</th><th>Games</th><th>Series</th>
           </tr></thead>
           <tbody>
             ${matches.map(m => {
               const gamesStr = m.games.map((g,i)=>`${g.s1}-${g.s2}`).join(', ');
               return `<tr>
                 <td><span style="font-family:var(--font-display);font-weight:700">Wk ${m.week}</span></td>
+                <td style="font-size:13px;color:var(--muted)">${m.partner||'—'}</td>
                 <td style="font-weight:600">${m.opponent}</td>
                 <td>${m.complete ? `<span class="${m.won?'result-w':'result-l'}">${m.won?'W':'L'}</span>` : '<span style="color:var(--muted);font-size:12px">Pending</span>'}</td>
                 <td style="color:var(--muted);font-size:13px">${gamesStr||'—'}</td>
