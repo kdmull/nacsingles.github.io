@@ -162,9 +162,18 @@ let bracketAuthed = false;
 let currentModalSlot = null; // {round, matchIndex}
 
 window.addEventListener('DOMContentLoaded', async () => {
-  currentLeague = LEAGUES.find(l => l.id === 'singles');
-  await loadData(); // load regular season data for seedings
-  await loadBracket();
+  try {
+    currentLeague = LEAGUES.find(l => l.id === 'singles');
+    await loadData(); // load regular season data for seedings
+  } catch(e) {
+    console.warn('Could not load season data:', e);
+  }
+  try {
+    await loadBracket();
+  } catch(e) {
+    console.warn('Could not load bracket data:', e);
+    bracketData = initBracketFromStandings();
+  }
   render();
 });
 
@@ -174,13 +183,17 @@ document.getElementById('score-modal').addEventListener('click', e => {
 
 // ── BRACKET DATA ──────────────────────────────────────
 async function loadBracket() {
-  const result = await dbGet(BRACKET_KEY);
-  if(result.data) {
-    bracketData = result.data;
-  } else {
-    // Initialize from standings
+  try {
+    const result = await dbGet(BRACKET_KEY);
+    if(result && result.data && result.data.seeds) {
+      bracketData = result.data;
+    } else {
+      bracketData = initBracketFromStandings();
+      await saveBracket();
+    }
+  } catch(e) {
+    console.warn('Bracket load error:', e);
     bracketData = initBracketFromStandings();
-    await saveBracket();
   }
 }
 
