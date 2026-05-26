@@ -186,7 +186,7 @@ const PLAYOFF_KEY_PREFIX = 'playoff_';
 let playoffData = null;
 let playerAuthed = false;
 let adminAuthed = false;
-let currentModalMatch = null;
+let playoffModalMatch = null;
 let leagueId = null;
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -402,7 +402,7 @@ async function resetPlayoff() {
 // ── SCORE MODAL ────────────────────────────────────────
 function openModal(idx) {
   const m = playoffData.matches[idx];
-  currentModalMatch = idx;
+  playoffModalMatch = idx;
   const t1 = getTeamName(playoffData.teams[m.t1]);
   const t2 = getTeamName(playoffData.teams[m.t2]);
   document.getElementById('modal-t1').textContent = t1;
@@ -417,7 +417,7 @@ function openModal(idx) {
 
 function closeModal() {
   document.getElementById('score-modal').classList.remove('open');
-  currentModalMatch = null;
+  playoffModalMatch = null;
 }
 
 async function submitScore() {
@@ -426,8 +426,8 @@ async function submitScore() {
   if(isNaN(s1)||isNaN(s2)||s1<0||s2<0) { showToast('Enter valid scores!'); return; }
   if(s1===s2) { showToast('No ties in pickleball!'); return; }
   document.getElementById('submit-btn').disabled = true;
-  playoffData.matches[currentModalMatch].s1 = s1;
-  playoffData.matches[currentModalMatch].s2 = s2;
+  playoffData.matches[playoffModalMatch].s1 = s1;
+  playoffData.matches[playoffModalMatch].s2 = s2;
   await savePlayoff();
   closeModal();
   render();
