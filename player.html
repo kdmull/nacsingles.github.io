@@ -25,6 +25,11 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
 .nav-logo{height:44px;width:auto}
 .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--white);font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:.7rem 1.2rem;transition:color .12s;text-decoration:none;border-right:1px solid rgba(255,255,255,.15)}
 .back-btn:hover{color:var(--green)}
+.nav-tabs{display:flex}
+.nav-tab{padding:1rem .95rem;font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;text-decoration:none;display:block}
+.nav-tab:hover{color:var(--white)}.nav-tab.active{color:var(--green);border-bottom-color:var(--green)}
+[data-show-bracket='1'] #bracket-tab{display:block!important}
+[data-show-playoffs='1'] #playoffs-tab{display:block!important}
 .page{padding:2rem 1.5rem;max-width:1000px;margin:0 auto}
 .btn{padding:8px 20px;border-radius:var(--radius);font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .12s;border:1.5px solid transparent}
 .loading-overlay{display:flex;align-items:center;justify-content:center;padding:4rem;color:var(--muted);font-family:var(--font-display);font-size:16px;text-transform:uppercase;letter-spacing:1px;gap:12px}
@@ -65,6 +70,13 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:10px 20px;border-radius:var(--radius);font-family:var(--font-display);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.5px;transform:translateY(80px);opacity:0;transition:all .25s;z-index:9999;pointer-events:none;border-left:4px solid var(--green)}
 .toast.show{transform:translateY(0);opacity:1}
 @media(max-width:768px){
+  nav{flex-wrap:wrap}
+  .nav-brand{width:100%;justify-content:center;margin-right:0;padding:.5rem 0}
+  .nav-logo{height:36px}
+  .back-btn{display:none}
+  .nav-tabs{width:100%;border-top:1px solid rgba(255,255,255,.08);overflow-x:auto;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{flex:1;padding:.7rem .5rem;font-size:13px;text-align:center;min-width:70px}
   .profile-header{padding:1.2rem;gap:1rem}
   .profile-avatar{width:56px;height:56px;font-size:24px}
   .profile-name{font-size:24px}
@@ -77,13 +89,30 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
 </style>
 </head>
 <body>
+<script>
+(function(){
+  var p=new URLSearchParams(window.location.search).get('league');
+  var leagues={singles:'singles',beginner:'doubles',int1949:'doubles',int50:'doubles',adv1949:'doubles',adv50:'doubles'};
+  if(p==='singles') document.documentElement.setAttribute('data-show-bracket','1');
+  if(leagues[p]==='doubles') document.documentElement.setAttribute('data-show-playoffs','1');
+  if(p) document.documentElement.setAttribute('data-league',p);
+})();
+</script>
 <nav>
   <a class="nav-brand" href="index.html">
     <img src="naclogo.png" class="nav-logo" alt="NAC"/>
   </a>
-  <a class="back-btn" id="back-btn" href="#">← Standings</a>
+  <a class="back-btn" id="back-btn" href="#">← Leagues</a>
+  <div class="nav-tabs">
+    <a class="nav-tab" id="tab-standings" href="#" style="text-decoration:none">Standings</a>
+    <a class="nav-tab" id="tab-schedule" href="#" style="text-decoration:none">Schedule</a>
+    <a class="nav-tab" id="tab-scores" href="#" style="text-decoration:none">Scores</a>
+    <a class="nav-tab" id="bracket-tab" href="bracket.html" style="display:none;text-decoration:none">Bracket</a>
+    <a class="nav-tab" id="playoffs-tab" href="#" style="display:none;text-decoration:none">Playoffs</a>
+  </div>
 </nav>
 
+<div class="league-banner" id="league-banner" style="background:var(--surface2);border-bottom:1px solid var(--border);padding:16px 1.5rem;font-family:var(--font-display);font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--navy);text-align:center">Loading...</div>
 <div class="page" id="main-content">
   <div class="loading-overlay"><div class="spinner"></div>Loading profile...</div>
 </div>
@@ -107,11 +136,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('back-btn').href = `league.html?league=${leagueId}`;
 
   document.title = `${playerName} — NAC Pickleball`;
+  document.getElementById('league-banner').textContent = currentLeague?.name || '';
+
+  // Wire up nav tabs
+  const leagueUrl = `league.html?league=${leagueId}`;
+  document.getElementById('tab-standings').href = leagueUrl;
+  document.getElementById('tab-schedule').href = leagueUrl;
+  document.getElementById('tab-scores').href = leagueUrl;
+  document.getElementById('back-btn').href = leagueUrl;
+  if(currentLeague?.type === 'doubles'){
+    const pt = document.getElementById('playoffs-tab');
+    if(pt){ pt.style.display='block'; pt.href=`doubles-playoff.html?league=${leagueId}`; }
+  }
+
   await loadData();
-  renderProfile(playerName);
+  renderProfile(playerName, leagueId);
 });
 
-function renderProfile(playerName) {
+function renderProfile(playerName, leagueId) {
   const stats = getStats();
   const active = getActivePlayers();
   const rows = active.map(p => {
@@ -197,10 +239,18 @@ function renderProfile(playerName) {
           <tbody>
             ${matches.map(m => {
               const gamesStr = m.games.map((g,i)=>`${g.s1}-${g.s2}`).join(', ');
+              const makePlayerLink = (name) => {
+                if(!name||name==='—') return '<span style="color:var(--muted)">—</span>';
+                // For doubles, names may be "A / B" — make each clickable
+                return name.split(' / ').map(n => {
+                  const encoded = encodeURIComponent(n.trim());
+                  return `<a href="player.html?league=${leagueId}&player=${encoded}" style="font-weight:600;font-size:14px;color:var(--navy);text-decoration:none;border-bottom:1px dashed rgba(26,42,108,.3)">${n.trim()}</a>`;
+                }).join('<span style="color:var(--muted);font-size:13px"> / </span>');
+              };
               return `<tr>
                 <td><span style="font-family:var(--font-display);font-weight:700">Wk ${m.week}</span></td>
-                <td style="font-size:13px;color:var(--muted)">${m.partner||'—'}</td>
-                <td style="font-weight:600">${m.opponent}</td>
+                <td>${m.partner ? makePlayerLink(m.partner) : '<span style="color:var(--muted)">—</span>'}</td>
+                <td>${makePlayerLink(m.opponent)}</td>
                 <td>${m.complete ? `<span class="${m.won?'result-w':'result-l'}">${m.won?'W':'L'}</span>` : '<span style="color:var(--muted);font-size:12px">Pending</span>'}</td>
                 <td style="color:var(--muted);font-size:13px">${gamesStr||'—'}</td>
                 <td style="font-family:var(--font-display);font-size:13px">${m.complete?m.seriesStr:'—'}</td>
