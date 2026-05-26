@@ -209,6 +209,19 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await loadData();
   await loadPlayoff();
+  // Auto-populate seeds from standings if all seeds are empty
+  if(playoffData.seeds.every(s=>!s)) {
+    const stats = getStats();
+    const active = getActivePlayers();
+    const sorted = active.map(p=>{
+      const s=stats[p]||{w:0,l:0,pts:0,opp:0};
+      const tot=s.w+s.l;
+      return{name:p,pct:tot?s.w/tot:0,diff:s.pts-s.opp};
+    }).sort((a,b)=>b.pct-a.pct||b.diff-a.diff);
+    for(let i=0;i<4;i++){
+      if(sorted[i]) playoffData.seeds[i]=sorted[i].name;
+    }
+  }
   render();
 });
 
@@ -222,8 +235,12 @@ function playoffKey() { return PLAYOFF_KEY_PREFIX + leagueId; }
 async function loadPlayoff() {
   try {
     const result = await dbGet(playoffKey());
-    if(result && result.data && result.data.teams && result.data.teams.length === 4) {
+    if(result && result.data && result.data.seeds) {
       playoffData = result.data;
+      // Ensure matches have correct team1/team2 arrays (in case old format)
+      if(!playoffData.matches || !playoffData.matches[0].team1) {
+        playoffData.matches = initPlayoff().matches;
+      }
     } else {
       playoffData = initPlayoff();
     }
@@ -237,39 +254,39 @@ async function savePlayoff() {
 }
 
 function initPlayoff() {
-  // 4 teams, each is {p1, p2} (player names)
-  const teams = [
-    {p1:'', p2:''},
-    {p1:'', p2:''},
-    {p1:'', p2:''},
-    {p1:'', p2:''},
+  // 4 seeds — rotating partner format
+  // seeds[0]=Seed1, seeds[1]=Seed2, seeds[2]=Seed3, seeds[3]=Seed4
+  const seeds = ['','','',''];
+  // Match 1: Seed1+Seed4 vs Seed2+Seed3
+  // Match 2: Seed1+Seed3 vs Seed2+Seed4
+  // Match 3: Seed1+Seed2 vs Seed3+Seed4
+  const matches = [
+    {label:'Match 1', team1:[0,3], team2:[1,2], s1:null, s2:null},
+    {label:'Match 2', team1:[0,2], team2:[1,3], s1:null, s2:null},
+    {label:'Match 3', team1:[0,1], team2:[2,3], s1:null, s2:null},
   ];
-  // Generate all 6 round robin matchups: 0v1, 0v2, 0v3, 1v2, 1v3, 2v3
-  const matches = [];
-  for(let i=0; i<4; i++) for(let j=i+1; j<4; j++) {
-    matches.push({t1:i, t2:j, s1:null, s2:null});
-  }
-  return {teams, matches};
+  return {seeds, matches};
 }
 
-function getTeamName(team) {
-  if(!team || (!team.p1 && !team.p2)) return 'TBD';
-  if(team.p1 && team.p2) return `${team.p1} / ${team.p2}`;
-  return team.p1 || team.p2;
+function getSeedName(idx) {
+  if(!playoffData || !playoffData.seeds) return 'TBD';
+  return playoffData.seeds[idx] || `Seed ${idx+1}`;
+}
+function getMatchTeamName(seedIdxArr) {
+  return seedIdxArr.map(i => getSeedName(i)).join(' / ');
 }
 
 function getStandings() {
-  const stats = playoffData.teams.map((t,i) => ({idx:i, w:0, l:0, ptsFor:0, ptsAgainst:0}));
+  // Track wins per seed index (0-3)
+  const stats = [0,1,2,3].map(i => ({idx:i, w:0, l:0, ptsFor:0, ptsAgainst:0}));
   for(const m of playoffData.matches) {
     if(m.s1 !== null && m.s2 !== null) {
-      const win = m.s1 > m.s2 ? m.t1 : m.t2;
-      const los = m.s1 > m.s2 ? m.t2 : m.t1;
-      stats[win].w++;
-      stats[los].l++;
-      stats[win].ptsFor += Math.max(m.s1, m.s2);
-      stats[win].ptsAgainst += Math.min(m.s1, m.s2);
-      stats[los].ptsFor += Math.min(m.s1, m.s2);
-      stats[los].ptsAgainst += Math.max(m.s1, m.s2);
+      const t1win = m.s1 > m.s2;
+      const winSeeds = t1win ? m.team1 : m.team2;
+      const losSeeds = t1win ? m.team2 : m.team1;
+      const wpts = Math.max(m.s1, m.s2), lpts = Math.min(m.s1, m.s2);
+      for(const s of winSeeds){ stats[s].w++; stats[s].ptsFor+=wpts; stats[s].ptsAgainst+=lpts; }
+      for(const s of losSeeds){ stats[s].l++; stats[s].ptsFor+=lpts; stats[s].ptsAgainst+=wpts; }
     }
   }
   return stats.sort((a,b) => b.w - a.w || (b.ptsFor - b.ptsAgainst) - (a.ptsFor - a.ptsAgainst));
@@ -277,30 +294,29 @@ function getStandings() {
 
 // ── RENDER ─────────────────────────────────────────────
 function render() {
-  const teamsSet = playoffData.teams.every(t => t.p1 || t.p2);
+  const teamsSet = playoffData.seeds.some(s => s);
   const standings = getStandings();
   const played = playoffData.matches.filter(m => m.s1 !== null).length;
   const allDone = played === playoffData.matches.length;
-  const winner = allDone ? playoffData.teams[standings[0].idx] : null;
+  const winner = allDone ? getSeedName(standings[0].idx) : null;
 
   const standingsHTML = `
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:1.5rem">
       <table class="standings-table" style="border:none;border-radius:0">
         <thead><tr>
-          <th style="width:40px">#</th>
-          <th>Team</th>
+          <th style="width:40px">Seed</th>
+          <th>Player</th>
           <th class="num">W</th>
           <th class="num">L</th>
           <th class="num">Pts +/-</th>
         </tr></thead>
         <tbody>
           ${standings.map((s,i) => {
-            const team = playoffData.teams[s.idx];
             const diff = s.ptsFor - s.ptsAgainst;
             const rc = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
             return `<tr>
-              <td><span class="rank ${rc}">${i+1}</span></td>
-              <td><strong>${getTeamName(team)}</strong>${i===0&&allDone?'<span class="winner-badge">Champion</span>':''}</td>
+              <td><span class="rank ${rc}">#${s.idx+1}</span></td>
+              <td><strong>${getSeedName(s.idx)}</strong>${i===0&&allDone?'<span class="winner-badge">Champion</span>':''}</td>
               <td class="num">${s.w}</td>
               <td class="num">${s.l}</td>
               <td class="num" style="color:${diff>=0?'var(--green-dark)':'var(--danger)'}">${diff>0?'+':''}${diff}</td>
@@ -314,18 +330,18 @@ function render() {
     <h3 style="font-family:var(--font-display);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin-bottom:1rem">Matches</h3>
     <div class="matches-grid">
       ${playoffData.matches.map((m,i) => {
-        const t1 = playoffData.teams[m.t1];
-        const t2 = playoffData.teams[m.t2];
         const done = m.s1 !== null;
         const t1win = done && m.s1 > m.s2;
         const t2win = done && m.s2 > m.s1;
         const canScore = playerAuthed || adminAuthed;
+        const t1name = getMatchTeamName(m.team1);
+        const t2name = getMatchTeamName(m.team2);
         return `<div class="match-card ${done?'completed':'upcoming'}">
-          <div class="match-num">Match ${i+1}</div>
+          <div class="match-num">${m.label}</div>
           <div class="match-teams">
-            <span class="team-name${t1win?' winner':''}">${getTeamName(t1)}</span>
+            <span class="team-name${t1win?' winner':''}">${t1name}</span>
             <span class="vs-badge">vs</span>
-            <span class="team-name${t2win?' winner':''}">${getTeamName(t2)}</span>
+            <span class="team-name${t2win?' winner':''}">${t2name}</span>
           </div>
           <div class="match-score">${done ? m.s1+' — '+m.s2 : '—'}</div>
           ${canScore ? `<button class="score-btn" onclick="openModal(${i})">${done?'Edit':'Enter Score'}</button>` : ''}
@@ -354,18 +370,22 @@ function render() {
   // Admin setup section
   const adminSetupHTML = adminAuthed ? `
     <div class="admin-section">
-      <h3>Team Setup</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:1rem">Enter the 4 playoff teams below, then click Save.</p>
+      <h3>Playoff Seeds</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:1rem">Enter or edit the 4 seeded players below. Partners rotate each match automatically.</p>
       <div class="team-setup-grid">
-        ${playoffData.teams.map((t,i) => `
+        ${playoffData.seeds.map((s,i) => `
           <div class="team-setup-card">
-            <h4>Team ${i+1}</h4>
-            <input class="admin-input" placeholder="Player 1" value="${t.p1||''}" oninput="playoffData.teams[${i}].p1=this.value"/>
-            <input class="admin-input" placeholder="Player 2" value="${t.p2||''}" oninput="playoffData.teams[${i}].p2=this.value"/>
+            <h4>Seed ${i+1}</h4>
+            <input class="admin-input" placeholder="Player name" value="${s||''}" oninput="playoffData.seeds[${i}]=this.value"/>
           </div>`).join('')}
       </div>
+      <p style="color:var(--muted);font-size:12px;margin-top:.75rem">
+        Match 1: <strong>Seed 1 &amp; 4</strong> vs <strong>Seed 2 &amp; 3</strong><br>
+        Match 2: <strong>Seed 1 &amp; 3</strong> vs <strong>Seed 2 &amp; 4</strong><br>
+        Match 3: <strong>Seed 1 &amp; 2</strong> vs <strong>Seed 3 &amp; 4</strong>
+      </p>
       <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
-        <button class="btn btn-green" onclick="saveTeams()">Save Teams</button>
+        <button class="btn btn-green" onclick="saveTeams()">Save Seeds</button>
         <button class="btn btn-danger" onclick="resetPlayoff()">Reset All Scores</button>
       </div>
     </div>` : '';
@@ -403,12 +423,7 @@ async function resetPlayoff() {
 function openModal(idx) {
   const m = playoffData.matches[idx];
   playoffModalMatch = idx;
-  const t1 = getTeamName(playoffData.teams[m.t1]);
-  const t2 = getTeamName(playoffData.teams[m.t2]);
-  document.getElementById('modal-t1').textContent = t1;
-  document.getElementById('modal-t2').textContent = t2;
-  document.getElementById('modal-label1').textContent = t1;
-  document.getElementById('modal-label2').textContent = t2;
+
   document.getElementById('modal-s1').value = m.s1 !== null ? m.s1 : '';
   document.getElementById('modal-s2').value = m.s2 !== null ? m.s2 : '';
   document.getElementById('submit-btn').disabled = false;
