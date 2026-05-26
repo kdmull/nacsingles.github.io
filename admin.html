@@ -177,6 +177,7 @@ function checkAdmin(){
     document.getElementById('admin-gate').style.display='none';
     document.getElementById('admin-content').classList.add('visible');
     renderAdminPanel();
+    loadScoreLog();
   } else {
     document.getElementById('admin-err').textContent='Incorrect password.';
   }
@@ -290,6 +291,41 @@ function exportJSON(){
   const blob=new Blob([JSON.stringify({schedule,players:PLAYERS},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='nac-schedule.json';a.click();showToast('Exported!');
+}
+
+async function loadScoreLog(){
+  const logSection=document.getElementById('score-log-body');
+  logSection.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)"><div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="spinner"></div>Loading...</div></td></tr>';
+  try{
+    const leagueFilter = currentLeague ? `&league_key=eq.${encodeURIComponent(currentLeague.key)}` : '';
+    const r=await fetch(
+      `${SUPABASE_URL}/rest/v1/pb_scores_log?order=submitted_at.desc&limit=100${leagueFilter}`,
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    );
+    if(!r.ok){logSection.innerHTML='<tr><td colspan="6" style="color:var(--danger);padding:1rem">Failed to load log.</td></tr>';return;}
+    const rows=await r.json();
+    if(!rows.length){
+      logSection.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No scores logged yet.</td></tr>';
+      return;
+    }
+    logSection.innerHTML=rows.map(row=>{
+      const games=(row.games||[]).filter(g=>g.s1!==null);
+      const gamesStr=games.map((g,i)=>`G${i+1}: ${g.s1}-${g.s2}`).join(' | ');
+      const dt=new Date(row.submitted_at);
+      const dateStr=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      const timeStr=dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      return`<tr>
+        <td style="white-space:nowrap;font-size:13px">${dateStr}<br><span style="color:var(--muted);font-size:12px">${timeStr}</span></td>
+        <td style="font-size:13px">${row.league_name||row.league_key}</td>
+        <td style="font-size:13px">Week ${row.week}</td>
+        <td style="font-size:13px">${row.team1||'—'}<br><span style="color:var(--muted);font-size:12px">vs ${row.team2||'—'}</span></td>
+        <td style="font-size:13px;color:var(--green-dark);font-weight:600">${row.winner||'—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${gamesStr||'—'}</td>
+      </tr>`;
+    }).join('');
+  }catch(e){
+    logSection.innerHTML='<tr><td colspan="6" style="color:var(--danger);padding:1rem">Error loading log.</td></tr>';
+  }
 }
 </script>
 </body>

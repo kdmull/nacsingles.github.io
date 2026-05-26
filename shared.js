@@ -53,6 +53,25 @@ async function dbSet(key,val){
     return true;
   }catch(e){console.error('DB save exception:',e);return false;}
 }
+async function logScore(week, matchIdx, games, winner, team1, team2){
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/pb_scores_log`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        league_key: currentLeague?.key||'unknown',
+        league_name: currentLeague?.name||'unknown',
+        week,
+        match_num: matchIdx+1,
+        team1,
+        team2,
+        games,
+        winner
+      })
+    });
+  }catch(e){console.error('Score log failed:',e);}
+}
+
 async function loadData(){
   if(!currentLeague)return;
   const result=await dbGet(currentLeague.key);
@@ -284,6 +303,10 @@ async function submitScore(){
   const{week,idx}=currentModalMatch;
   schedule.find(w=>w.week===week).matches[idx].games=games;
   const ok=await saveData();
+  // Log the score entry
+  const m=schedule.find(w=>w.week===week).matches[idx];
+  const r=seriesResult(m);
+  await logScore(week, idx, games, r.winner, r.team1, r.team2);
   closeModal();
   if(typeof renderScoreMatches==='function')renderScoreMatches(week);
   if(typeof renderStandings==='function')renderStandings();
