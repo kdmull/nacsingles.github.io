@@ -141,7 +141,7 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
         </div>
       </div>
     </div>
-    <div class="admin-section">
+    <div class="admin-section" id="score-log-section" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
         <h3 style="margin:0">Score Log</h3>
         <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="loadScoreLog()">↻ Refresh Log</button>
@@ -199,6 +199,7 @@ function checkAdmin(){
   if(document.getElementById('admin-pw').value===ADMIN_PW){
     document.getElementById('admin-gate').style.display='none';
     document.getElementById('admin-content').classList.add('visible');
+    document.getElementById('score-log-section').style.display='block';
     renderAdminPanel();
     loadScoreLog();
   } else {
