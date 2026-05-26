@@ -142,7 +142,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tab-standings').href = leagueUrl;
   document.getElementById('tab-schedule').href = leagueUrl;
   document.getElementById('tab-scores').href = leagueUrl;
-  document.getElementById('back-btn').href = leagueUrl;
   if(currentLeague?.type === 'doubles'){
     const pt = document.getElementById('playoffs-tab');
     if(pt){ pt.style.display='block'; pt.href=`doubles-playoff.html?league=${leagueId}`; }
