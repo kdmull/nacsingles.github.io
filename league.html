@@ -164,6 +164,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     <button class="nav-tab" onclick="showPage('schedule',this)">Schedule</button>
     <button class="nav-tab" onclick="showPage('scores',this)">Scores</button>
     <a class="nav-tab" id="bracket-tab" href="bracket.html" style="display:none;text-decoration:none">Bracket</a>
+    <a class="nav-tab" id="playoffs-tab" href="#" style="display:none;text-decoration:none">Playoffs</a>
   </div>
 </nav>
 
@@ -262,6 +263,10 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   if(currentLeague.id === 'singles'){
     const bt = document.getElementById('bracket-tab');
     if(bt) bt.style.display = 'block';
+  }
+  if(currentLeague.type === 'doubles'){
+    const pt = document.getElementById('playoffs-tab');
+    if(pt){ pt.style.display = 'block'; pt.href = `doubles-playoff.html?league=${currentLeague.id}`; }
   }
   await loadData();
   scheduleWeek = scoresWeek = findCurrentWeek();
