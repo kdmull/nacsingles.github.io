@@ -206,21 +206,7 @@ function renderProfile(playerName) {
       </div>`}
     </div>
 
-    ${Object.keys(h2h).length > 0 ? `
-    <div class="section">
-      <h3>Head to Head</h3>
-      <div class="h2h-grid">
-        ${Object.entries(h2h).sort((a,b)=>(b[1].w+b[1].l)-(a[1].w+a[1].l)).map(([opp,rec])=>{
-          const total = rec.w + rec.l;
-          const winPct = total ? rec.w/total : 0;
-          return `<div class="h2h-row">
-            <div class="h2h-name">${opp}</div>
-            <div class="h2h-record" style="color:${rec.w>rec.l?'var(--green-dark)':rec.l>rec.w?'var(--danger)':'var(--navy)'}">${rec.w}-${rec.l}</div>
-            <div class="h2h-bar"><div class="h2h-bar-fill" style="width:${winPct*100}%"></div></div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>` : ''}
+
   `;
 }
 
