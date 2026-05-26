@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/jpg" href="favicon.jpg"/>
 <title>NAC Pickleball</title>
+<script>
+// Set league type class before render to prevent nav layout shift
+(function(){
+  var p=new URLSearchParams(window.location.search).get('league');
+  var leagues={singles:'singles',beginner:'doubles',int1949:'doubles',int50:'doubles',adv1949:'doubles',adv50:'doubles'};
+  if(p&&leagues[p]) document.documentElement.setAttribute('data-league',p);
+  if(p==='singles') document.documentElement.setAttribute('data-show-bracket','1');
+  if(leagues[p]==='doubles') document.documentElement.setAttribute('data-show-playoffs','1');
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -29,6 +39,8 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 .nav-tabs{display:flex}
 .nav-tab{padding:1rem .95rem;font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
 .nav-tab:hover{color:var(--white)}.nav-tab.active{color:var(--green);border-bottom-color:var(--green)}
+[data-show-bracket='1'] #bracket-tab{display:block!important}
+[data-show-playoffs='1'] #playoffs-tab{display:block!important}
 .league-banner{background:var(--surface2);border-bottom:1px solid var(--border);padding:16px 1.5rem;font-family:var(--font-display);font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--navy);text-align:center}
 .page{display:none;padding:2rem 1.5rem;max-width:1000px;margin:0 auto;word-break:break-word}.page.active{display:block}
 .section-header{margin-bottom:1.5rem;display:flex;align-items:flex-end;gap:16px}
@@ -260,13 +272,10 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   }
   document.title = currentLeague.name + ' — NAC Pickleball';
   document.getElementById('league-banner').textContent = currentLeague.name;
-  if(currentLeague.id === 'singles'){
-    const bt = document.getElementById('bracket-tab');
-    if(bt) bt.style.display = 'block';
-  }
+  // Set playoffs href dynamically for doubles leagues
   if(currentLeague.type === 'doubles'){
     const pt = document.getElementById('playoffs-tab');
-    if(pt){ pt.style.display = 'block'; pt.href = `doubles-playoff.html?league=${currentLeague.id}`; }
+    if(pt) pt.href = `doubles-playoff.html?league=${currentLeague.id}`;
   }
   await loadData();
   scheduleWeek = scoresWeek = findCurrentWeek();
