@@ -25,6 +25,10 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
 .nav-logo{height:44px;width:auto}
 .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--white);font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:.7rem 1.2rem;transition:color .12s;text-decoration:none;border-right:1px solid rgba(255,255,255,.15)}
 .back-btn:hover{color:var(--green)}
+.nav-tabs{display:flex}
+.nav-tab{padding:1rem .95rem;font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
+.nav-tab:hover{color:var(--white)}.nav-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.league-banner{background:var(--surface2);border-bottom:1px solid var(--border);padding:16px 1.5rem;font-family:var(--font-display);font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--navy);text-align:center}
 .page{padding:2rem 1.5rem;max-width:1000px;margin:0 auto}
 .section-header{margin-bottom:1.5rem;display:flex;align-items:flex-end;gap:16px}
 .section-header-text h2{font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--navy)}
@@ -105,6 +109,15 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
 .loading-overlay{display:flex;align-items:center;justify-content:center;padding:4rem;color:var(--muted);font-family:var(--font-display);font-size:16px;text-transform:uppercase;letter-spacing:1px;gap:12px}
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:768px){
+  nav{flex-wrap:wrap}
+  .nav-brand{width:100%;justify-content:center;margin-right:0;padding:.5rem 0}
+  .nav-logo{height:36px}
+  .back-btn{display:none}
+  .nav-tabs{width:100%;border-top:1px solid rgba(255,255,255,.08);overflow-x:auto;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{flex:1;padding:.7rem .5rem;font-size:13px;text-align:center;min-width:70px}
+}
 @media(max-width:700px){
   .bracket-card{width:150px}
   .slot-name{font-size:12px}
@@ -117,9 +130,16 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
   <a class="nav-brand" href="index.html">
     <img src="naclogo.png" class="nav-logo" alt="NAC"/>
   </a>
-  <a class="back-btn" href="league.html?league=singles">← Singles League</a>
+  <a class="back-btn" href="index.html">← Leagues</a>
+  <div class="nav-tabs">
+    <a class="nav-tab" href="league.html?league=singles" style="text-decoration:none;display:flex;align-items:center">Standings</a>
+    <a class="nav-tab" href="league.html?league=singles#schedule" style="text-decoration:none;display:flex;align-items:center">Schedule</a>
+    <a class="nav-tab" href="league.html?league=singles#scores" style="text-decoration:none;display:flex;align-items:center">Scores</a>
+    <a class="nav-tab active" href="bracket.html" style="text-decoration:none;display:flex;align-items:center">Bracket</a>
+  </div>
 </nav>
 
+<div class="league-banner">Singles League</div>
 <div class="page">
   <div class="section-header">
     <div class="section-accent"></div>
