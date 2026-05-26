@@ -302,8 +302,15 @@ async function loadScoreLog(){
       `${SUPABASE_URL}/rest/v1/pb_scores_log?order=submitted_at.desc&limit=100${leagueFilter}`,
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
     );
-    if(!r.ok){logSection.innerHTML='<tr><td colspan="6" style="color:var(--danger);padding:1rem">Failed to load log.</td></tr>';return;}
+    if(!r.ok){
+      console.error('Score log fetch failed:', r.status, r.statusText);
+      const errText = await r.text();
+      console.error('Error body:', errText);
+      logSection.innerHTML=`<tr><td colspan="6" style="color:var(--danger);padding:1rem">Failed to load log (${r.status}): ${errText}</td></tr>`;
+      return;
+    }
     const rows=await r.json();
+    console.log('Score log rows:', rows.length);
     if(!rows.length){
       logSection.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No scores logged yet.</td></tr>';
       return;
@@ -324,7 +331,8 @@ async function loadScoreLog(){
       </tr>`;
     }).join('');
   }catch(e){
-    logSection.innerHTML='<tr><td colspan="6" style="color:var(--danger);padding:1rem">Error loading log.</td></tr>';
+    console.error('Score log exception:', e);
+    logSection.innerHTML=`<tr><td colspan="6" style="color:var(--danger);padding:1rem">Error: ${e.message}</td></tr>`;
   }
 }
 </script>
