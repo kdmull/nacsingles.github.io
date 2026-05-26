@@ -238,6 +238,12 @@ function bracketSeriesResult(match) {
 
 // ── RENDER ─────────────────────────────────────────────
 function render() {
+  // Safety — if bracketData is missing required fields, rebuild it
+  if(!bracketData || !bracketData.semis || bracketData.semis.length < 2) {
+    bracketData = initBracketFromStandings();
+  }
+  if(!bracketData.final) bracketData.final = {p1:null,p2:null,games:[],winner:null};
+
   const stats = getStats();
   const active = getActivePlayers();
   const allRows = active.map(p => {
@@ -352,7 +358,6 @@ function render() {
         <!-- Champion -->
         <div class="champion-wrap">
           <div class="champion-card">
-            <div class="champion-trophy">🏆</div>
             <div class="champion-label">Champion</div>
             <div class="champion-name${!champion?' tbd':''}">${champion||'TBD'}</div>
           </div>
