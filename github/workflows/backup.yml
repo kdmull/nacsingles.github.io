@@ -3,15 +3,30 @@ name: Nightly Supabase Backup
 on:
   schedule:
     - cron: '0 5 * * *'  # Runs at midnight EST (5am UTC) every day
-  workflow_dispatch:       # Also allows manual trigger from GitHub Actions tab
+  workflow_dispatch:       # Allows manual trigger from GitHub Actions tab
 
 jobs:
   backup:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Verify secrets are set
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "ERROR: SUPABASE_URL secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_KEY }}" ]; then
+            echo "ERROR: SUPABASE_KEY secret is not set"
+            exit 1
+          fi
+          echo "Secrets verified ✓"
+          echo "URL starts with: $(echo '${{ secrets.SUPABASE_URL }}' | cut -c1-20)..."
 
       - name: Fetch all Supabase data
         env:
@@ -19,37 +34,47 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           mkdir -p backups
-
-          # Fetch all rows from pb_league table
-          curl -s "${SUPABASE_URL}/rest/v1/pb_league?select=*" \
-            -H "apikey: ${SUPABASE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_KEY}" \
-            -o backups/pb_league_latest.json
-
-          # Fetch score log
-          curl -s "${SUPABASE_URL}/rest/v1/pb_scores_log?select=*&order=submitted_at.desc" \
-            -H "apikey: ${SUPABASE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_KEY}" \
-            -o backups/pb_scores_log_latest.json
-
-          # Create timestamped copies
           TIMESTAMP=$(date +%Y-%m-%d)
-          cp backups/pb_league_latest.json backups/pb_league_${TIMESTAMP}.json
-          cp backups/pb_scores_log_latest.json backups/pb_scores_log_${TIMESTAMP}.json
 
-          echo "Backup completed: ${TIMESTAMP}"
+          echo "Fetching league data..."
+          HTTP_STATUS=$(curl -s -o backups/pb_league_${TIMESTAMP}.json -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/pb_league?select=*" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+          echo "League data HTTP status: ${HTTP_STATUS}"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "ERROR: Failed to fetch league data (HTTP ${HTTP_STATUS})"
+            cat backups/pb_league_${TIMESTAMP}.json
+            exit 1
+          fi
+
+          echo "Fetching score log..."
+          HTTP_STATUS=$(curl -s -o backups/pb_scores_log_${TIMESTAMP}.json -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/pb_scores_log?select=*&order=submitted_at.desc" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+          echo "Score log HTTP status: ${HTTP_STATUS}"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "ERROR: Failed to fetch score log (HTTP ${HTTP_STATUS})"
+            cat backups/pb_scores_log_${TIMESTAMP}.json
+            exit 1
+          fi
+
+          # Keep latest copies
+          cp backups/pb_league_${TIMESTAMP}.json backups/pb_league_latest.json
+          cp backups/pb_scores_log_${TIMESTAMP}.json backups/pb_scores_log_latest.json
+          echo "Backup completed: ${TIMESTAMP} ✓"
 
       - name: Clean up backups older than 30 days
         run: |
-          find backups/ -name "pb_league_2*.json" -mtime +30 -delete
-          find backups/ -name "pb_scores_log_2*.json" -mtime +30 -delete
-          echo "Old backups cleaned up"
+          find backups/ -name "pb_league_2*.json" -mtime +30 -delete 2>/dev/null || true
+          find backups/ -name "pb_scores_log_2*.json" -mtime +30 -delete 2>/dev/null || true
+          echo "Old backups cleaned up ✓"
 
       - name: Commit backup files
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add backups/
-          # Only commit if there are changes
           git diff --staged --quiet || git commit -m "Automated backup $(date +%Y-%m-%d)"
           git push
