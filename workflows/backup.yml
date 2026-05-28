@@ -1,0 +1,55 @@
+name: Nightly Supabase Backup
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # Runs at midnight EST (5am UTC) every day
+  workflow_dispatch:       # Also allows manual trigger from GitHub Actions tab
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch all Supabase data
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p backups
+
+          # Fetch all rows from pb_league table
+          curl -s "${SUPABASE_URL}/rest/v1/pb_league?select=*" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}" \
+            -o backups/pb_league_latest.json
+
+          # Fetch score log
+          curl -s "${SUPABASE_URL}/rest/v1/pb_scores_log?select=*&order=submitted_at.desc" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}" \
+            -o backups/pb_scores_log_latest.json
+
+          # Create timestamped copies
+          TIMESTAMP=$(date +%Y-%m-%d)
+          cp backups/pb_league_latest.json backups/pb_league_${TIMESTAMP}.json
+          cp backups/pb_scores_log_latest.json backups/pb_scores_log_${TIMESTAMP}.json
+
+          echo "Backup completed: ${TIMESTAMP}"
+
+      - name: Clean up backups older than 30 days
+        run: |
+          find backups/ -name "pb_league_2*.json" -mtime +30 -delete
+          find backups/ -name "pb_scores_log_2*.json" -mtime +30 -delete
+          echo "Old backups cleaned up"
+
+      - name: Commit backup files
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add backups/
+          # Only commit if there are changes
+          git diff --staged --quiet || git commit -m "Automated backup $(date +%Y-%m-%d)"
+          git push
