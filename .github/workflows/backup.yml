@@ -75,6 +75,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
+          git pull --rebase origin main
           git add backups/
           git diff --staged --quiet || git commit -m "Automated backup $(date +%Y-%m-%d)"
           git push
