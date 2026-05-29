@@ -68,7 +68,7 @@ async function logScore(week, matchIdx, games, winner, team1, team2){
       method:'POST',
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({
-        league_key: currentLeague?.key||'unknown',
+        league_key: seasonKey(currentLeague?.key||'unknown', viewingSeason?.id||currentSeason?.id||'spring2026'),
         league_name: currentLeague?.name||'unknown',
         week,
         match_num: matchIdx+1,
