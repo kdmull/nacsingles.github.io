@@ -119,6 +119,18 @@ nav{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;posi
           <button class="btn btn-green" id="admin-save-btn" onclick="saveAdmin()">Save All Changes</button>
         </div>
       </div>
+      <div class="admin-section" id="seasons-section">
+        <h3>Seasons</h3>
+        <div id="seasons-list" style="margin-bottom:1rem"></div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;color:var(--muted);font-family:var(--font-display);text-transform:uppercase;letter-spacing:.5px">New Season Name</label>
+            <input class="admin-input" id="new-season-name" placeholder="e.g. Fall 2026" style="width:180px"/>
+          </div>
+          <button class="btn btn-green" onclick="createNewSeason()">Start New Season</button>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin-top:.75rem">Starting a new season archives the current one and starts fresh across all leagues. Past data is preserved.</p>
+      </div>
       <div class="admin-section">
         <h3>Player Names</h3>
         <div id="admin-players" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
