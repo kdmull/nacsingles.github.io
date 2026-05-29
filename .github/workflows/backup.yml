@@ -76,5 +76,13 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add backups/
-          git diff --staged --quiet || git commit -m "Automated backup $(date +%Y-%m-%d)"
-          git push
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git stash
+            git pull --rebase origin main
+            git stash pop
+            git add backups/
+            git commit -m "Automated backup $(date +%Y-%m-%d)"
+            git push origin main
+          fi
