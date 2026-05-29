@@ -200,14 +200,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
     </table>
   </div>
 
-  <!-- MATCH LOG -->
-  <div style="margin-top:1.5rem">
-    <div class="section-header" style="margin-bottom:1rem">
-      <div class="section-accent"></div>
-      <div class="section-header-text"><h3 style="font-family:var(--font-display);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--navy)">Recent Results</h3></div>
-    </div>
-    <div id="match-log-body"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
-  </div>
+
 </div>
 
 <!-- SCHEDULE -->
@@ -242,6 +235,13 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
   <div id="scores-content" style="display:none">
     <div class="week-scroll" id="score-week-tabs"></div>
     <div class="matches-grid" id="score-matches"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
+    <div style="margin-top:1.5rem">
+      <div class="section-header" style="margin-bottom:1rem">
+        <div class="section-accent"></div>
+        <div class="section-header-text"><h3 style="font-family:var(--font-display);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--navy)">Recent Results</h3></div>
+      </div>
+      <div id="match-log-body"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
+    </div>
   </div>
 </div>
 
@@ -358,7 +358,6 @@ function checkScoresAuth(){
 }
 
 function renderStandings(){
-  renderMatchLog();
   const stats=getStats();
   const active=getActivePlayers();
   const rows=active.map(p=>{
@@ -388,56 +387,56 @@ function renderStandings(){
   }).join('');
 }
 
-function renderMatchLog(){
+async function renderMatchLog(){
   const el = document.getElementById('match-log-body');
   if(!el) return;
+  el.innerHTML='<div class="loading-overlay"><div class="spinner"></div>Loading...</div>';
 
-  // Collect all completed matches across all weeks
-  const results = [];
-  for(const w of schedule){
-    for(let i=0; i<w.matches.length; i++){
-      const m = w.matches[i];
-      const r = seriesResult(m);
-      if(!r.complete) continue;
-      const games = (m.games||[]).filter(g=>g.s1!==null);
-      const gamesStr = games.map(g=>`${g.s1}-${g.s2}`).join(', ');
-      results.push({week:w.week, match:i+1, team1:r.team1, team2:r.team2, winner:r.winner, seriesStr:r.seriesStr, gamesStr, isDoubles:r.isDoubles});
+  try {
+    const leagueKey = viewingSeason ? seasonKey(currentLeague.key, viewingSeason.id) : currentLeague.key;
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/pb_scores_log?league_key=eq.${encodeURIComponent(leagueKey)}&order=submitted_at.desc&limit=50`,
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    );
+    if(!r.ok) throw new Error('fetch failed');
+    const rows = await r.json();
+
+    if(!rows.length){
+      el.innerHTML='<p style="color:var(--muted);font-size:14px;padding:.5rem 0">No results logged yet this season.</p>';
+      return;
     }
+
+    el.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-lg);border:1px solid var(--border)">
+      <table style="width:100%;border-collapse:collapse;background:var(--white);min-width:400px">
+        <thead style="background:var(--navy)">
+          <tr>
+            <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">When</th>
+            <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Week</th>
+            <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Winner</th>
+            <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Defeated</th>
+            <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Scores</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row=>{
+            const dt=new Date(row.submitted_at);
+            const timeStr=dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+            const games=(row.games||[]).filter(g=>g.s1!==null).map(g=>`${g.s1}-${g.s2}`).join(', ');
+            const loser = row.winner===row.team1 ? row.team2 : row.team1;
+            return`<tr style="border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+              <td style="padding:9px 12px;font-size:12px;color:var(--muted);white-space:nowrap">${timeStr}</td>
+              <td style="padding:9px 12px;font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--muted)">Wk ${row.week}</td>
+              <td style="padding:9px 12px;font-size:13px;font-weight:600;color:var(--green-dark)">${row.winner||'—'}</td>
+              <td style="padding:9px 12px;font-size:13px;color:var(--muted)">${loser||'—'}</td>
+              <td style="padding:9px 12px;font-size:12px;color:var(--muted)">${games||'—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  } catch(e) {
+    el.innerHTML='<p style="color:var(--muted);font-size:14px;padding:.5rem 0">Could not load match log.</p>';
   }
-
-  if(!results.length){
-    el.innerHTML='<p style="color:var(--muted);font-size:14px;padding:.5rem 0">No results yet this season.</p>';
-    return;
-  }
-
-  // Sort newest week first
-  results.sort((a,b)=>b.week-a.week||b.match-a.match);
-
-  el.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-lg);border:1px solid var(--border)">
-    <table style="width:100%;border-collapse:collapse;background:var(--white);min-width:400px">
-      <thead style="background:var(--navy)">
-        <tr>
-          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Week</th>
-          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Winner</th>
-          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Defeated</th>
-          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Series</th>
-          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Scores</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${results.map(r=>{
-          const loser = r.winner===r.team1 ? r.team2 : r.team1;
-          return`<tr style="border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
-            <td style="padding:9px 12px;font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap">Wk ${r.week}</td>
-            <td style="padding:9px 12px;font-size:13px;font-weight:600;color:var(--green-dark)">${r.winner}</td>
-            <td style="padding:9px 12px;font-size:13px;color:var(--muted)">${loser}</td>
-            <td style="padding:9px 12px;font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--navy)">${r.seriesStr}</td>
-            <td style="padding:9px 12px;font-size:12px;color:var(--muted)">${r.gamesStr||'—'}</td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
-  </div>`;
 }
 
 function renderScheduleMatches(week){
@@ -453,6 +452,7 @@ function renderScheduleMatches(week){
 function setScheduleWeek(w){renderScheduleMatches(w);}
 
 function renderScoreMatches(week){
+  renderMatchLog();
   scoresWeek=week;
   renderWeekTabs('score-week-tabs',week,'setScoresWeek');
   const wd=schedule.find(w=>w.week===week);
