@@ -120,7 +120,10 @@ function isViewingActiveSeason(){
 
 async function loadData(){
   if(!currentLeague)return;
-  const result=await dbGet(currentLeague.key);
+  const seasonId = viewingSeason?.id || currentSeason?.id || 'spring2026';
+  const key = seasonKey(currentLeague.key, seasonId);
+  console.log('Loading data from key:', key);
+  const result=await dbGet(key);
   if(result.data){
     if(result.data.schedule)schedule=result.data.schedule;
     if(result.data.players)PLAYERS=result.data.players;
@@ -134,7 +137,6 @@ async function saveData(){
   // Always use season key — default to spring2026 if seasons not loaded yet
   const seasonId = viewingSeason?.id || currentSeason?.id || 'spring2026';
   const key = seasonKey(currentLeague.key, seasonId);
-  console.log('Loading data from key:', key);
   const ok=await dbSet(key,{schedule,players:PLAYERS,updated:Date.now()});
   lastSynced=new Date();return ok;
 }
