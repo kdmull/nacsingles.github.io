@@ -183,6 +183,7 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
 
 <!-- STANDINGS -->
 <div class="page active" id="page-standings">
+  <div id="season-selector-wrap" style="margin-bottom:1rem"></div>
   <div class="section-header">
     <div class="section-accent"></div>
     <div class="section-header-text"><h2>Standings</h2><p id="standings-subtitle">Loading...</p></div>
@@ -197,6 +198,15 @@ nav{background:var(--navy);padding:0 max(1.5rem,env(safe-area-inset-right)) 0 ma
       </tr></thead>
       <tbody id="standings-body"><tr><td colspan="7"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></td></tr></tbody>
     </table>
+  </div>
+
+  <!-- MATCH LOG -->
+  <div style="margin-top:1.5rem">
+    <div class="section-header" style="margin-bottom:1rem">
+      <div class="section-accent"></div>
+      <div class="section-header-text"><h3 style="font-family:var(--font-display);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--navy)">Recent Results</h3></div>
+    </div>
+    <div id="match-log-body"><div class="loading-overlay"><div class="spinner"></div>Loading...</div></div>
   </div>
 </div>
 
@@ -286,6 +296,34 @@ document.getElementById('score-modal').addEventListener('click', e=>{
   if(e.target===e.currentTarget) closeModal();
 });
 
+function renderSeasonSelector(){
+  const wrap = document.getElementById('season-selector-wrap');
+  if(!wrap || allSeasons.length <= 1) return;
+  const isActive = isViewingActiveSeason();
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;box-shadow:0 1px 3px rgba(26,42,108,.05)">
+      <span style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Season:</span>
+      <select onchange="switchSeason(this.value)" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--navy);padding:5px 10px;font-size:14px;font-family:var(--font-body);outline:none;cursor:pointer">
+        ${allSeasons.slice().reverse().map(s=>`<option value="${s.id}" ${s.id===viewingSeason?.id?'selected':''}>${s.name}${s.id===currentSeason?.id?' (Current)':''}</option>`).join('')}
+      </select>
+      ${!isActive?`<span style="font-size:12px;color:var(--muted);font-style:italic">Viewing past season — read only</span>`:''}
+    </div>`;
+}
+
+async function switchSeason(seasonId){
+  const found = allSeasons.find(s=>s.id===seasonId);
+  if(!found) return;
+  viewingSeason = found;
+  schedule = JSON.parse(JSON.stringify(SCHEDULE_DEFAULT));
+  PLAYERS = ['Jordan C.','Cordel B.','Ethan V.','Elias V.','Marcus T.','Devon W.','Chase H.','Riley S.','Jordan M.','Tanner B.','Cam P.'];
+  await loadData();
+  scheduleWeek = scoresWeek = findCurrentWeek();
+  renderSeasonSelector();
+  renderStandings();
+  renderScheduleMatches(scheduleWeek);
+  if(scoreAuthed) renderScoreMatches(scoresWeek);
+}
+
 function showPage(id, el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
@@ -320,6 +358,7 @@ function checkScoresAuth(){
 }
 
 function renderStandings(){
+  renderMatchLog();
   const stats=getStats();
   const active=getActivePlayers();
   const rows=active.map(p=>{
@@ -347,6 +386,58 @@ function renderStandings(){
       <td class="num">${r.streak!=='—'?`<span class="streak-badge ${sc}">${r.streak}</span>`:'—'}</td>
     </tr>`;
   }).join('');
+}
+
+function renderMatchLog(){
+  const el = document.getElementById('match-log-body');
+  if(!el) return;
+
+  // Collect all completed matches across all weeks
+  const results = [];
+  for(const w of schedule){
+    for(let i=0; i<w.matches.length; i++){
+      const m = w.matches[i];
+      const r = seriesResult(m);
+      if(!r.complete) continue;
+      const games = (m.games||[]).filter(g=>g.s1!==null);
+      const gamesStr = games.map(g=>`${g.s1}-${g.s2}`).join(', ');
+      results.push({week:w.week, match:i+1, team1:r.team1, team2:r.team2, winner:r.winner, seriesStr:r.seriesStr, gamesStr, isDoubles:r.isDoubles});
+    }
+  }
+
+  if(!results.length){
+    el.innerHTML='<p style="color:var(--muted);font-size:14px;padding:.5rem 0">No results yet this season.</p>';
+    return;
+  }
+
+  // Sort newest week first
+  results.sort((a,b)=>b.week-a.week||b.match-a.match);
+
+  el.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-lg);border:1px solid var(--border)">
+    <table style="width:100%;border-collapse:collapse;background:var(--white);min-width:400px">
+      <thead style="background:var(--navy)">
+        <tr>
+          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Week</th>
+          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Winner</th>
+          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Defeated</th>
+          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Series</th>
+          <th style="font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);padding:9px 12px;text-align:left">Scores</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${results.map(r=>{
+          const loser = r.winner===r.team1 ? r.team2 : r.team1;
+          return`<tr style="border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+            <td style="padding:9px 12px;font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap">Wk ${r.week}</td>
+            <td style="padding:9px 12px;font-size:13px;font-weight:600;color:var(--green-dark)">${r.winner}</td>
+            <td style="padding:9px 12px;font-size:13px;color:var(--muted)">${loser}</td>
+            <td style="padding:9px 12px;font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--navy)">${r.seriesStr}</td>
+            <td style="padding:9px 12px;font-size:12px;color:var(--muted)">${r.gamesStr||'—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
 }
 
 function renderScheduleMatches(week){
