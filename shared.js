@@ -131,7 +131,10 @@ async function saveData(){
   if(!schedule||!schedule.length||!schedule[0].matches||!schedule[0].matches.length){
     showToast('Save blocked — schedule looks empty!');return false;
   }
-  const key = viewingSeason ? seasonKey(currentLeague.key, viewingSeason.id) : currentLeague.key;
+  // Always use season key — default to spring2026 if seasons not loaded yet
+  const seasonId = viewingSeason?.id || currentSeason?.id || 'spring2026';
+  const key = seasonKey(currentLeague.key, seasonId);
+  console.log('Loading data from key:', key);
   const ok=await dbSet(key,{schedule,players:PLAYERS,updated:Date.now()});
   lastSynced=new Date();return ok;
 }
