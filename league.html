@@ -286,8 +286,16 @@ window.addEventListener('DOMContentLoaded', async ()=>{
     const pt = document.getElementById('playoffs-tab');
     if(pt) pt.href = `doubles-playoff.html?league=${currentLeague.id}`;
   }
+  // Load seasons first so data key includes season suffix
+  await loadSeasons();
+  const urlSeason = getSeasonFromURL();
+  if(urlSeason){
+    const found = allSeasons.find(s=>s.id===urlSeason);
+    if(found) viewingSeason = found;
+  }
   await loadData();
   scheduleWeek = scoresWeek = findCurrentWeek();
+  renderSeasonSelector();
   renderStandings();
   renderScheduleMatches(scheduleWeek);
 });
