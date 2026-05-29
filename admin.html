@@ -190,6 +190,8 @@ async function initAdminLeague(league){
   document.getElementById('save-bar-league').textContent=league.name;
   document.getElementById('league-selector').style.display='none';
   document.getElementById('admin-wrap').style.display='block';
+  await loadSeasons();
+  viewingSeason = currentSeason;
   await loadData();
   scheduleWeek=findCurrentWeek();
 }
@@ -200,6 +202,7 @@ function checkAdmin(){
     document.getElementById('admin-content').classList.add('visible');
     document.getElementById('score-log-section').style.display='block';
     renderAdminPanel();
+    renderSeasonsAdmin();
     loadScoreLog();
   } else {
     document.getElementById('admin-err').textContent='Incorrect password.';
@@ -297,6 +300,34 @@ function removePlayer(idx){
   PLAYERS.splice(idx,1);
   renderAdminPanel();showToast(name+' removed — hit Save to sync');
 }
+function renderSeasonsAdmin(){
+  const el=document.getElementById('seasons-list');
+  if(!el)return;
+  if(!allSeasons.length){el.innerHTML='<p style="color:var(--muted);font-size:13px">No seasons yet.</p>';return;}
+  el.innerHTML=allSeasons.slice().reverse().map(s=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:var(--radius);margin-bottom:6px">
+      <span style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--navy);flex:1">${s.name}</span>
+      ${s.id===currentSeason?.id?'<span style="font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--green-dark);background:rgba(76,175,40,.12);padding:2px 8px;border-radius:4px">Active</span>':'<span style="font-size:12px;color:var(--muted)">Archived</span>'}
+      <span style="font-size:12px;color:var(--muted)">${new Date(s.created).toLocaleDateString('en-US',{month:'short',year:'numeric'})}</span>
+    </div>`).join('');
+}
+
+async function createNewSeason(){
+  const name=document.getElementById('new-season-name').value.trim();
+  if(!name){showToast('Enter a season name!');return;}
+  if(allSeasons.find(s=>s.name.toLowerCase()===name.toLowerCase())){showToast('Season name already exists!');return;}
+  if(!confirm(`Start new season "${name}"? The current season will be archived and all leagues will start fresh.`))return;
+  await startNewSeason(name);
+  // Reset current league data to empty for new season
+  schedule=JSON.parse(JSON.stringify(SCHEDULE_DEFAULT));
+  PLAYERS=['Jordan C.','Cordel B.','Ethan V.','Elias V.','Marcus T.','Devon W.','Chase H.','Riley S.','Jordan M.','Tanner B.','Cam P.'];
+  await saveData();
+  document.getElementById('new-season-name').value='';
+  renderSeasonsAdmin();
+  renderAdminPanel();
+  showToast(`Season "${name}" started!`);
+}
+
 async function saveAdmin(){
   const btn=document.getElementById('admin-save-btn');
   btn.textContent='Saving...';btn.disabled=true;

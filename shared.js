@@ -31,11 +31,20 @@ let PLAYERS = ['Jordan C.','Cordel B.','Ethan V.','Elias V.','Marcus T.','Devon 
 let scheduleWeek=1, scoresWeek=1, currentModalMatch=null, lastSynced=null;
 let scoreAuthed=false;
 let currentLeague=null; // full league object from LEAGUES array
+let currentSeason=null;  // { id, name } e.g. { id:'spring2026', name:'Spring 2026' }
+let allSeasons=[];        // list of all seasons
+let viewingSeason=null;   // season being viewed (may differ from active if browsing history)
 
 function getLeagueFromURL(){
   const params=new URLSearchParams(window.location.search);
   const id=params.get('league');
   return LEAGUES.find(l=>l.id===id)||null;
+}
+function getSeasonFromURL(){
+  return new URLSearchParams(window.location.search).get('season')||null;
+}
+function seasonKey(leagueKey, seasonId){
+  return `${leagueKey}_${seasonId}`;
 }
 
 async function dbGet(key){
@@ -72,6 +81,43 @@ async function logScore(week, matchIdx, games, winner, team1, team2){
   }catch(e){console.error('Score log failed:',e);}
 }
 
+async function loadSeasons(){
+  try {
+    const result = await dbGet('nac_seasons');
+    if(result && result.data && result.data.seasons){
+      allSeasons = result.data.seasons;
+      const activeId = result.data.active;
+      currentSeason = allSeasons.find(s=>s.id===activeId) || allSeasons[0] || null;
+    } else {
+      // First time — create default Spring 2026 season
+      currentSeason = {id:'spring2026', name:'Spring 2026', created: new Date().toISOString()};
+      allSeasons = [currentSeason];
+      await saveSeasons(currentSeason.id);
+    }
+    viewingSeason = viewingSeason || currentSeason;
+  } catch(e) {
+    console.warn('Could not load seasons:', e);
+    currentSeason = {id:'spring2026', name:'Spring 2026'};
+    allSeasons = [currentSeason];
+    viewingSeason = currentSeason;
+  }
+}
+async function saveSeasons(activeId){
+  await dbSet('nac_seasons', {active: activeId, seasons: allSeasons});
+}
+async function startNewSeason(name){
+  const id = name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const newSeason = {id, name, created: new Date().toISOString()};
+  allSeasons.push(newSeason);
+  currentSeason = newSeason;
+  viewingSeason = newSeason;
+  await saveSeasons(id);
+  return newSeason;
+}
+function isViewingActiveSeason(){
+  return viewingSeason && currentSeason && viewingSeason.id === currentSeason.id;
+}
+
 async function loadData(){
   if(!currentLeague)return;
   const result=await dbGet(currentLeague.key);
@@ -85,7 +131,8 @@ async function saveData(){
   if(!schedule||!schedule.length||!schedule[0].matches||!schedule[0].matches.length){
     showToast('Save blocked — schedule looks empty!');return false;
   }
-  const ok=await dbSet(currentLeague.key,{schedule,players:PLAYERS,updated:Date.now()});
+  const key = viewingSeason ? seasonKey(currentLeague.key, viewingSeason.id) : currentLeague.key;
+  const ok=await dbSet(key,{schedule,players:PLAYERS,updated:Date.now()});
   lastSynced=new Date();return ok;
 }
 
